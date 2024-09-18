@@ -2,12 +2,10 @@
 // To compile the contract use :
 // npm run build-contracts
 
-use starknet::ContractAddress;
+// To run the tests use :
+// npm run test-contracts
 
-#[starknet::interface]
-pub trait IStarkloop<TContractState> {
-    fn create_subscription(ref self: TContractState, recipient: ContractAddress, amount: u256, token_address: ContractAddress, periodicity: u256) -> u256;
-}
+use starknet::ContractAddress;
 
 // Structure to hold subscription details 
 #[derive(Drop, Serde, starknet::Store)]
@@ -22,6 +20,13 @@ pub struct Subscription
     is_active: bool,                        // The subscription is active
 }
 
+#[starknet::interface]
+pub trait IStarkloop<TContractState> {
+    fn create_subscription(ref self: TContractState, subscription: Subscription) -> u256;
+    fn get_subscription(self: @TContractState, subscription_id: u256) -> Subscription;
+}
+
+
 #[starknet::contract]
 mod Starkloop {
     use starknet::ContractAddress;
@@ -31,8 +36,8 @@ mod Starkloop {
 
     #[storage]
     struct Storage {
-        users: LegacyMap::<ContractAddress, Vec<u256>>,     // Map the address of each user to their subscription id list
-        subscriptions: Map<u256, super::Subscription>,      // Map subscription id to Subscription
+        users: LegacyMap::<ContractAddress, Vec<u256>>,         // Map the address of each user to their subscription id list
+        subscriptions: LegacyMap<u256, super::Subscription>,    // Map subscription id to Subscription
         next_subscription_id: u256,
     }
 
@@ -45,13 +50,7 @@ mod Starkloop {
     #[derive(Drop, starknet::Event)]
     struct SubscriptionCreated {
         id: u256,                               // id of the subscription
-        user: ContractAddress,                  // Address of the user that instanciate the Subscription
-        recipient: ContractAddress,             // Address of the recipient who will receive the token
-        amount: u256,                           // Amount of tokens to be transfert to the recipient 
-        token_address: ContractAddress,         // Address of the ERC-20 token contract 
-        periodicity: u256,                      // Periodicity of payments in seconds 
-        next_payment: u256,                     // Timestamp of the next payment 
-        is_active: bool,                        // The subscription is active
+        subscription: super::Subscription,
     }
     
     #[constructor]
@@ -61,48 +60,39 @@ mod Starkloop {
 
     #[abi(embed_v0)]
     impl StarkloopImpl of super::IStarkloop<ContractState> {
-        fn create_subscription(ref self: ContractState, recipient: ContractAddress, amount: u256, 
-                                        token_address: ContractAddress, periodicity: u256) -> u256 {
+        fn create_subscription(ref self: ContractState, subscription: super::Subscription) -> u256 {
             // Increase the subscription id
             let next_subscription_id = self.next_subscription_id.read() + 1;
             self.next_subscription_id.write(next_subscription_id);
-
-            let user = starknet::get_caller_address();
-            let next_payment = 0; // FIX ME compute the real value
-
-            // let mut previous_id = sub.id;
-            let mut is_active = true;
-            let subscription = super::Subscription { 
-                user: user, 
-                recipient: recipient, 
-                amount: amount, 
-                token_address: token_address,
-                periodicity: periodicity, 
-                next_payment: next_payment, 
-                is_active: is_active };
             
+            // Create a copy of the subscription before writing it to storage
+            // It's to avoid "Variable was previously moved."
+            let subscription_copy = super::Subscription { 
+                        user: subscription.user, 
+                        recipient: subscription.recipient, 
+                        amount: subscription.amount, 
+                        token_address: subscription.token_address,
+                        periodicity: subscription.periodicity, 
+                        next_payment: subscription.next_payment, 
+                        is_active: subscription.is_active };
+
             // Writing the struct to storage
             self.subscriptions.entry(next_subscription_id).write(subscription);
-            
-            // Append the subscription id in the Vec for the user.
-            self.users.entry(user).append().write(next_subscription_id);
-
+        
             // Emit the event
             self.emit(SubscriptionCreated {
                 id: next_subscription_id,
-                user: user,
-                recipient: recipient, 
-                amount: amount, 
-                token_address: token_address,
-                periodicity: periodicity, 
-                next_payment: next_payment, 
-                is_active: is_active, 
+                subscription: subscription_copy,
             });
-
-            // Return the subsription Id
+        
+            // Return the ID of the newly created subscription
             next_subscription_id
         }
-    }
 
+        fn get_subscription(self: @ContractState, subscription_id: u256) -> super::Subscription {
+            self.subscriptions.entry(subscription_id).read()
+        }
+
+    }
 }
 
