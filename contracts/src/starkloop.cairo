@@ -24,15 +24,14 @@ pub struct Subscription
 
 #[starknet::contract]
 mod Starkloop {
-    use starknet::storage::MutableVecTrait;
-use starknet::ContractAddress;
+    use starknet::ContractAddress;
     use starknet::storage::{
-        StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map, Vec
+        MutableVecTrait, StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map, Vec
     };
 
     #[storage]
     struct Storage {
-        users: LegacyMap::<ContractAddress, Vec<u256>>,     // Map the each user to their subscription id list
+        users: LegacyMap::<ContractAddress, Vec<u256>>,     // Map the address of each user to their subscription id list
         subscriptions: Map<u256, super::Subscription>,      // Map subscription id to Subscription
         next_subscription_id: u256,
     }
