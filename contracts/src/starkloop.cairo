@@ -23,17 +23,19 @@ pub trait IStarkloop<TContractState> {
     fn create_subscription(ref self: TContractState, subscription: Subscription) -> u256;
     fn get_subscription(self: @TContractState, subscription_id: u256) -> Subscription;
     fn remove_subscription(ref self: TContractState, subscription_id: u256) -> u256;
+    fn approve(self: @TContractState, erc20_contract: ContractAddress, amount: u256);
 }
 
 
 #[starknet::contract]
 pub mod Starkloop {
-    use starknet::ContractAddress;
+    use starknet::{ContractAddress, get_contract_address};
     use starknet::storage::{
         MutableVecTrait, StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map,
         Vec
     };
     use openzeppelin::access::ownable::OwnableComponent;
+    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
@@ -43,7 +45,9 @@ pub mod Starkloop {
 
     #[storage]
     struct Storage {
-        users: Map::<ContractAddress, Vec<u256>>, // Map the address of each user to their subscription id list
+        users: Map::<
+            ContractAddress, Vec<u256>
+        >, // Map the address of each user to their subscription id list
         subscriptions: Map<u256, super::Subscription>, // Map subscription id to Subscription
         next_subscription_id: u256,
         #[substorage(v0)]
@@ -65,12 +69,13 @@ pub mod Starkloop {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState) { }
+    fn constructor(ref self: ContractState, initial_owner: ContractAddress) {
+        self.ownable.initializer(initial_owner);
+    }
 
 
     #[abi(embed_v0)]
     impl StarkloopImpl of super::IStarkloop<ContractState> {
-
         fn remove_subscription(ref self: ContractState, subscription_id: u256) -> u256 {
             assert!(subscription_id >= 0, "Invalid subscription Id");
 
@@ -125,6 +130,11 @@ pub mod Starkloop {
 
         fn get_subscription(self: @ContractState, subscription_id: u256) -> super::Subscription {
             self.subscriptions.entry(subscription_id).read()
+        }
+
+        fn approve(self: @ContractState, erc20_contract: ContractAddress, amount: u256) {
+            IERC20Dispatcher { contract_address: erc20_contract }
+                .approve(get_contract_address(), amount);
         }
     }
 }
