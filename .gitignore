@@ -2,3 +2,4 @@
 snfoundry.toml
 
 /frontend/.env
+/frontend/.next
