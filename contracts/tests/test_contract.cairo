@@ -48,7 +48,7 @@ fn test_create_subscription() {
     
     // FIXME : use Mock Token ERC-20 
     let eth_token_address = test_address();  // Fictitious address for the ETH token
-    let usdc_token_address = test_address(); // Fictitious address for the USDC token
+    // let usdc_token_address = test_address(); // Fictitious address for the USDC token
     
     let subscription = Subscription{user: user1, 
                         recipient: user2, 

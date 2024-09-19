@@ -36,8 +36,8 @@ mod Starkloop {
 
     #[storage]
     struct Storage {
-        users: LegacyMap::<ContractAddress, Vec<u256>>,         // Map the address of each user to their subscription id list
-        subscriptions: LegacyMap<u256, super::Subscription>,    // Map subscription id to Subscription
+        users: Map::<ContractAddress, Vec<u256>>,         // Map the address of each user to their subscription id list
+        subscriptions: Map<u256, super::Subscription>,    // Map subscription id to Subscription
         next_subscription_id: u256,
     }
 
