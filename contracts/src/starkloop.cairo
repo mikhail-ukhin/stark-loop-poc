@@ -26,26 +26,35 @@ pub trait IStarkloop<TContractState> {
 
 
 #[starknet::contract]
-mod Starkloop {
+pub mod Starkloop {
     use starknet::ContractAddress;
     use starknet::storage::{
         MutableVecTrait, StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map,
         Vec
     };
+    use openzeppelin::access::ownable::OwnableComponent;
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+
+    #[abi(embed_v0)]
+    impl OwnableMixinImpl = OwnableComponent::OwnableMixinImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
-        users: Map::<
-            ContractAddress, Vec<u256>
-        >, // Map the address of each user to their subscription id list
+        users: Map::<ContractAddress, Vec<u256>>, // Map the address of each user to their subscription id list
         subscriptions: Map<u256, super::Subscription>, // Map subscription id to Subscription
         next_subscription_id: u256,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
         SubscriptionCreated: SubscriptionCreated,
+        #[flat]
+        OwnableEvent: OwnableComponent::Event
     }
 
     #[derive(Drop, starknet::Event)]
@@ -60,6 +69,7 @@ mod Starkloop {
 
     #[abi(embed_v0)]
     impl StarkloopImpl of super::IStarkloop<ContractState> {
+
         fn create_subscription(ref self: ContractState, subscription: super::Subscription) -> u256 {
             // Increase the subscription id
             let next_subscription_id = self.next_subscription_id.read() + 1;
