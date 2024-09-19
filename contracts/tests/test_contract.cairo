@@ -1,40 +1,14 @@
-// use core::starknet::SyscallResultTrait;
-// use snforge_std::{declare, ContractClassTrait};
-// use contracts::{IHelloStarknetDispatcher, IHelloStarknetDispatcherTrait};
-
-// #[test]
-// fn test_balance() {
-//     let contract = declare("HelloStarknet").unwrap();
-//     let (contract_address, _) = contract.deploy(@ArrayTrait::new()).unwrap_syscall();
-
-//     let dispatcher = IHelloStarknetDispatcher { contract_address };
-
-//     let balance = dispatcher.get_balance();
-//     assert(balance == 0, 'Balance is wrong');
-
-//     dispatcher.increase_balance(69);
-
-//     let updated_balance = dispatcher.get_balance();
-//     assert(updated_balance == 69, 'Balance wasnt updated correctly');
-// }
-
 use core::starknet::SyscallResultTrait;
 use snforge_std::{declare, test_address, start_cheat_caller_address, ContractClassTrait};
 use contracts::starkloop::{Subscription, IStarkloopDispatcher, IStarkloopDispatcherTrait};
+use starknet::ContractAddress;
 
+fn deploy_contract() -> ContractAddress {
+    let contract = declare("Starkloop").unwrap();
+    let (contract_address, _) = contract.deploy(@ArrayTrait::new()).unwrap_syscall();
 
-// // Structure to hold subscription details
-// #[derive(Drop, Serde, starknet::Store)]
-// pub struct Subscription
-// {
-//     user: ContractAddress,                  // Address of the user that instanciate the
-//     Subscription recipient: ContractAddress,             // Address of the recipient who will
-//     receive the token amount: u256,                           // Amount of tokens to be transfert
-//     to the recipient token_address: ContractAddress,         // Address of the ERC-20 token
-//     contract periodicity: u256,                      // Periodicity of payments in seconds
-//     next_payment: u256,                     // Timestamp of the next payment
-//     is_active: bool,                        // The subscription is active
-//}
+    contract_address
+}
 
 #[test]
 fn test_create_subscription() {
@@ -76,7 +50,6 @@ fn test_create_subscription() {
         );
     assert(second_subscription_id == 2, 'Second Id must be 2');
 }
-
 
 #[test]
 fn test_get_subscription() {
@@ -132,4 +105,41 @@ fn test_get_subscription() {
     assert(second_subscription.recipient == user1, 'Wrong recipient');
     assert(second_subscription.amount == 230_u256, 'Wrong amount');
     assert(second_subscription.token_address == usdc_token_address, 'Wrong token');
+}
+
+#[test]
+fn test_remove_subscription() {
+    let contract_address = deploy_contract();
+
+    let dispatcher = IStarkloopDispatcher { contract_address };
+
+    let user1 = test_address();
+    let user2 = test_address();
+
+    let eth_token_address = test_address();
+
+    let subscription1 = Subscription {
+        user: user1,
+        recipient: user2,
+        amount: 150_u256,
+        token_address: eth_token_address,
+        periodicity: 1000_u256,
+        next_payment: 0_u256,
+        is_active: true
+    };
+
+    start_cheat_caller_address(contract_address, user1);
+
+    let first_subscription_id = dispatcher.create_subscription(subscription1);
+
+    println!("{0}", first_subscription_id);
+
+    let _ = dispatcher.remove_subscription(first_subscription_id);
+
+    let removed_subscription = dispatcher.get_subscription(first_subscription_id);
+
+    assert(removed_subscription.is_active == false, 'it is still active');
+    assert(removed_subscription.amount == 0_u256, 'Wrong amount');
+    assert(removed_subscription.periodicity == 0_u256, 'Wrong periodicity');
+    assert(removed_subscription.next_payment == 0_u256, 'Wrong next_payment');
 }

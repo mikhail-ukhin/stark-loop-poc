@@ -22,6 +22,7 @@ pub struct Subscription {
 pub trait IStarkloop<TContractState> {
     fn create_subscription(ref self: TContractState, subscription: Subscription) -> u256;
     fn get_subscription(self: @TContractState, subscription_id: u256) -> Subscription;
+    fn remove_subscription(ref self: TContractState, subscription_id: u256) -> u256;
 }
 
 
@@ -64,11 +65,31 @@ pub mod Starkloop {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState) {}
+    fn constructor(ref self: ContractState) { }
 
 
     #[abi(embed_v0)]
     impl StarkloopImpl of super::IStarkloop<ContractState> {
+
+        fn remove_subscription(ref self: ContractState, subscription_id: u256) -> u256 {
+            assert!(subscription_id >= 0, "Invalid subscription Id");
+
+            let mut subscription = self.subscriptions.entry(subscription_id).read();
+
+            let disabled_subscription = super::Subscription {
+                user: subscription.user,
+                recipient: subscription.recipient,
+                amount: 0,
+                token_address: subscription.token_address,
+                periodicity: 0,
+                next_payment: 0,
+                is_active: false
+            };
+
+            self.subscriptions.entry(subscription_id).write(disabled_subscription);
+
+            subscription_id
+        }
 
         fn create_subscription(ref self: ContractState, subscription: super::Subscription) -> u256 {
             // Increase the subscription id
