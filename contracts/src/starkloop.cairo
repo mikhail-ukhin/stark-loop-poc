@@ -26,6 +26,7 @@ pub trait IStarkloop<TContractState> {
     fn approve(self: @TContractState, erc20_contract: ContractAddress, amount: u256);
     fn make_schedule_payment(ref self: TContractState, subscription_id: u256);
     fn update_subscription(ref self: TContractState, subscription_id: u256, subscription: Subscription);
+    fn check_due_payments(ref self: TContractState);
 }
 
 #[starknet::contract]
@@ -59,6 +60,7 @@ pub mod Starkloop {
     #[derive(Drop, starknet::Event)]
     enum Event {
         SubscriptionCreated: SubscriptionCreated,
+        DuePayment: DuePayment,
         #[flat]
         OwnableEvent: OwnableComponent::Event
     }
@@ -67,6 +69,12 @@ pub mod Starkloop {
     struct SubscriptionCreated {
         id: u256, // id of the subscription
         subscription: super::Subscription,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct DuePayment {
+        id: u256,
+        time: u64
     }
 
     #[constructor]
@@ -168,6 +176,31 @@ pub mod Starkloop {
             assert!(subscription_id >= 0, "Invalid subscription Id");
 
             self.subscriptions.entry(subscription_id).write(subscription);
+        }
+
+        fn check_due_payments(ref self: ContractState) {
+            let last_block_ts = get_block_timestamp();
+            let last_block_ts_u256 = convert_u64_to_u256(last_block_ts);
+            
+            let mut subscription_id = 0_u256;
+        
+            loop {
+                if subscription_id >= self.next_subscription_id.read() {
+                    break;
+                }
+        
+                let subscription = self.subscriptions.read(subscription_id);
+        
+                if subscription.is_active && last_block_ts_u256 >= (subscription.last_payment + subscription.periodicity) {
+                    
+                    self.emit(DuePayment { 
+                        id: subscription_id,
+                        time: last_block_ts
+                    });
+                }
+        
+                subscription_id += 1_u256;
+            }
         }
     }
 }
