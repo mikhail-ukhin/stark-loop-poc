@@ -1,19 +1,23 @@
 use core::starknet::SyscallResultTrait;
 use snforge_std::{declare, test_address, start_cheat_caller_address, ContractClassTrait};
 use contracts::starkloop::{Subscription, IStarkloopDispatcher, IStarkloopDispatcherTrait};
-use starknet::ContractAddress;
+use starknet::{ContractAddress, contract_address_const};
 
 fn deploy_contract() -> ContractAddress {
     let contract = declare("Starkloop").unwrap();
-    let (contract_address, _) = contract.deploy(@ArrayTrait::new()).unwrap_syscall();
+
+    let owner: ContractAddress = contract_address_const::<'owner'>();
+    let mut constructor_calldata = array![owner.into()];
+
+    let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap_syscall();
 
     contract_address
 }
 
 #[test]
 fn test_create_subscription() {
-    let contract = declare("Starkloop").unwrap();
-    let (contract_address, _) = contract.deploy(@ArrayTrait::new()).unwrap_syscall();
+    // First deploy a new contract
+    let contract_address =  deploy_contract();
 
     let dispatcher = IStarkloopDispatcher { contract_address };
 
@@ -53,8 +57,8 @@ fn test_create_subscription() {
 
 #[test]
 fn test_get_subscription() {
-    let contract = declare("Starkloop").unwrap();
-    let (contract_address, _) = contract.deploy(@ArrayTrait::new()).unwrap_syscall();
+    // First deploy a new contract
+    let contract_address =  deploy_contract();
 
     let dispatcher = IStarkloopDispatcher { contract_address };
 
@@ -109,7 +113,8 @@ fn test_get_subscription() {
 
 #[test]
 fn test_remove_subscription() {
-    let contract_address = deploy_contract();
+    // First deploy a new contract
+    let contract_address =  deploy_contract();
 
     let dispatcher = IStarkloopDispatcher { contract_address };
 
