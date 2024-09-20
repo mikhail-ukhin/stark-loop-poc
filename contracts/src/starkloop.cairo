@@ -7,7 +7,7 @@
 use starknet::ContractAddress;
 
 // Structure to hold subscription details
-#[derive(Drop, Serde, starknet::Store)]
+#[derive(Drop, Debug, Serde, starknet::Store)]
 pub struct Subscription {
     user: ContractAddress, // Address of the user that instanciate the Subscription
     recipient: ContractAddress, // Address of the recipient who will receive the token

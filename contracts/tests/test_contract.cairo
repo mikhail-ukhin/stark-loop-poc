@@ -21,12 +21,16 @@ fn test_create_subscription() {
 
     let dispatcher = IStarkloopDispatcher { contract_address };
 
-    let user1 = test_address();
-    let user2 = test_address();
+    let user1 = contract_address_const::<'user1'>();
+    let user2 = contract_address_const::<'user2'>();
 
-    // FIXME : use Mock Token ERC-20
-    let eth_token_address = test_address(); // Fictitious address for the ETH token
-    // let usdc_token_address = test_address(); // Fictitious address for the USDC token
+    // Check if users are different. I miss a print function :-( (that for sure exits)
+    assert(user1 != user2, 'user1 != user2 fails');
+
+    // FIXME : To be replaced by something like a constant that is surely defined somewhere
+    // let eth = something::ETH;
+    let eth_token_address = contract_address_const::<'fakeETH'>(); // Fake address for the ETH token
+    // let usdc_token_address = contract_address_const::<'fakeUSDC'>(); // Fake address for the USDC token
 
     let subscription = Subscription {
         user: user1,
@@ -63,48 +67,62 @@ fn test_get_subscription() {
     let dispatcher = IStarkloopDispatcher { contract_address };
 
     // Create 3 users
-    let user1 = test_address();
-    let user2 = test_address();
-    let user3 = test_address();
+    let user1 = contract_address_const::<'user1'>();
+    let user2 = contract_address_const::<'user2'>();
+    let user3 = contract_address_const::<'user3'>();
 
-    // FIXME : use Mock Token ERC-20
-    let eth_token_address = test_address(); // Fictitious address for the ETH token
-    let usdc_token_address = test_address(); // Fictitious address for the USDC token
+    let eth_token_address = contract_address_const::<'fakeETH'>(); // Fake address for the ETH token
+    let usdc_token_address = contract_address_const::<'fakeUSDC'>(); // Fake address for the USDC token
 
+    // Define a subscription
     let subscription1 = Subscription {
         user: user1,
-        recipient: user2,
+        recipient: user3,
         amount: 150_u256,
         token_address: eth_token_address,
         periodicity: 1000_u64,
         last_payment: 0_u64,
         is_active: true
     };
-    let subscription2 = Subscription {
-        user: user1,
-        recipient: user2,
-        amount: 230_u256,
-        token_address: eth_token_address,
-        periodicity: 2456_u64,
-        last_payment: 0_u64,
-        is_active: true
-    };
 
-    // Create 2 subscriptions
+    println!("user1 = {:?}", user1);
+    // To be able to print a struct, it must derive the Drop trait.
+    println!("subscription1 = {:?}", subscription1);
+
+    // Create subscription
     start_cheat_caller_address(contract_address, user1);
     let first_subscription_id = dispatcher.create_subscription(subscription1);
-    start_cheat_caller_address(contract_address, user2);
-    let second_subscription_id = dispatcher.create_subscription(subscription2);
+    println!("first_subscription_id = {}", first_subscription_id);
+
+    // Get subscription
+    let first_subscription = dispatcher.get_subscription(first_subscription_id);
+    println!("first_subscription = {:?}", first_subscription);
 
     // It should return the right values
-    let first_subscription = dispatcher.get_subscription(first_subscription_id);
     assert(first_subscription.user == user1, 'Wrong User');
     assert(first_subscription.recipient == user3, 'Wrong recipient');
     assert(first_subscription.amount == 150_u256, 'Wrong amount');
     assert(first_subscription.token_address == eth_token_address, 'Wrong token');
 
-    // It should return the right values
+    // Define a subscription
+    let subscription2 = Subscription {
+        user: user2,
+        recipient: user1,
+        amount: 230_u256,
+        token_address: usdc_token_address,
+        periodicity: 2456_u64,
+        last_payment: 0_u64,
+        is_active: true
+    };
+
+    // Create subscription
+    start_cheat_caller_address(contract_address, user2);
+    let second_subscription_id = dispatcher.create_subscription(subscription2);
+
+    // Get subscription
     let second_subscription = dispatcher.get_subscription(second_subscription_id);
+
+    // It should return the right values
     assert(second_subscription.user == user2, 'Wrong User');
     assert(second_subscription.recipient == user1, 'Wrong recipient');
     assert(second_subscription.amount == 230_u256, 'Wrong amount');
@@ -118,10 +136,10 @@ fn test_remove_subscription() {
 
     let dispatcher = IStarkloopDispatcher { contract_address };
 
-    let user1 = test_address();
-    let user2 = test_address();
+    let user1 = contract_address_const::<'user1'>();
+    let user2 = contract_address_const::<'user2'>();
 
-    let eth_token_address = test_address();
+    let eth_token_address = contract_address_const::<'fakeETH'>(); // Fake address for the ETH token
 
     let subscription1 = Subscription {
         user: user1,
