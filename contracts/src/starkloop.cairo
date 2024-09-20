@@ -25,8 +25,8 @@ pub trait IStarkloop<TContractState> {
     fn remove_subscription(ref self: TContractState, subscription_id: u256) -> u256;
     fn approve(self: @TContractState, erc20_contract: ContractAddress, amount: u256);
     fn make_schedule_payment(ref self: TContractState, subscription_id: u256);
+    fn update_subscription(ref self: TContractState, subscription_id: u256, subscription: Subscription);
 }
-
 
 #[starknet::contract]
 pub mod Starkloop {
@@ -143,9 +143,9 @@ pub mod Starkloop {
         }
 
         fn make_schedule_payment(ref self: ContractState, subscription_id: u256) {
+            //TBD add onwer check here, only admin or owner can trigger
 
-            // add onwer check here, only admin or owner can trigger
-            let subscription = self.subscriptions.entry(subscription_id).read();
+            let mut subscription = self.subscriptions.entry(subscription_id).read();
 
             assert(subscription.is_active == true, 'inactive subscription');
 
@@ -154,7 +154,20 @@ pub mod Starkloop {
 
             assert(last_block_ts_u256 >= (subscription.last_payment + subscription.periodicity), 'already payed');
 
-            // To be done (work in progress)
+            let erc20 = IERC20Dispatcher { contract_address: subscription.token_address };            
+            let success = erc20.transfer_from(subscription.user, subscription.recipient, subscription.amount);
+            
+            assert(success, 'Transfer failed');
+            
+            subscription.last_payment = last_block_ts_u256;
+            
+            self.update_subscription(subscription_id, subscription);
+        }
+
+        fn update_subscription(ref self: ContractState, subscription_id: u256, subscription: super::Subscription) {
+            assert!(subscription_id >= 0, "Invalid subscription Id");
+
+            self.subscriptions.entry(subscription_id).write(subscription);
         }
     }
 }
