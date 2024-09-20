@@ -13,8 +13,8 @@ pub struct Subscription {
     recipient: ContractAddress, // Address of the recipient who will receive the token
     amount: u256, // Amount of tokens to be transfert to the recipient 
     token_address: ContractAddress, // Address of the ERC-20 token contract 
-    periodicity: u256, // Periodicity of payments in seconds 
-    last_payment: u256, // Timestamp of the next payment 
+    periodicity: u64, // Periodicity of payments in seconds 
+    last_payment: u64, // Timestamp of the next payment 
     is_active: bool, // The subscription is active
 }
 
@@ -158,16 +158,15 @@ pub mod Starkloop {
             assert(subscription.is_active == true, 'inactive subscription');
 
             let last_block_ts = get_block_timestamp();
-            let last_block_ts_u256 = convert_u64_to_u256(last_block_ts);
 
-            assert(last_block_ts_u256 >= (subscription.last_payment + subscription.periodicity), 'already payed');
+            assert(last_block_ts >= (subscription.last_payment + subscription.periodicity), 'already payed');
 
             let erc20 = IERC20Dispatcher { contract_address: subscription.token_address };            
             let success = erc20.transfer_from(subscription.user, subscription.recipient, subscription.amount);
             
             assert(success, 'Transfer failed');
             
-            subscription.last_payment = last_block_ts_u256;
+            subscription.last_payment = last_block_ts;
             
             self.update_subscription(subscription_id, subscription);
         }
@@ -180,7 +179,6 @@ pub mod Starkloop {
 
         fn check_due_payments(ref self: ContractState) {
             let last_block_ts = get_block_timestamp();
-            let last_block_ts_u256 = convert_u64_to_u256(last_block_ts);
             
             let mut subscription_id = 0_u256;
         
@@ -191,7 +189,7 @@ pub mod Starkloop {
         
                 let subscription = self.subscriptions.read(subscription_id);
         
-                if subscription.is_active && last_block_ts_u256 >= (subscription.last_payment + subscription.periodicity) {
+                if subscription.is_active && last_block_ts >= (subscription.last_payment + subscription.periodicity) {
                     
                     self.emit(DuePayment { 
                         id: subscription_id,
