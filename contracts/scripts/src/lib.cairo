@@ -1,2 +1,1 @@
-// mod hellostarknet;
 mod starkloop;

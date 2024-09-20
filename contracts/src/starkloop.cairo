@@ -14,7 +14,7 @@ pub struct Subscription {
     amount: u256, // Amount of tokens to be transfert to the recipient 
     token_address: ContractAddress, // Address of the ERC-20 token contract 
     periodicity: u256, // Periodicity of payments in seconds 
-    next_payment: u256, // Timestamp of the next payment 
+    last_payment: u256, // Timestamp of the next payment 
     is_active: bool, // The subscription is active
 }
 
@@ -24,12 +24,13 @@ pub trait IStarkloop<TContractState> {
     fn get_subscription(self: @TContractState, subscription_id: u256) -> Subscription;
     fn remove_subscription(ref self: TContractState, subscription_id: u256) -> u256;
     fn approve(self: @TContractState, erc20_contract: ContractAddress, amount: u256);
+    fn make_schedule_payment(ref self: TContractState, subscription_id: u256);
 }
 
 
 #[starknet::contract]
 pub mod Starkloop {
-    use starknet::{ContractAddress, get_contract_address};
+    use starknet::{ContractAddress, get_contract_address, get_block_timestamp};
     use starknet::storage::{
         MutableVecTrait, StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map,
         Vec
@@ -73,9 +74,13 @@ pub mod Starkloop {
         self.ownable.initializer(initial_owner);
     }
 
+    fn convert_u64_to_u256(value: u64) -> u256 {
+        u256 { low: value.into(), high: 0 }
+    }
 
     #[abi(embed_v0)]
     impl StarkloopImpl of super::IStarkloop<ContractState> {
+
         fn remove_subscription(ref self: ContractState, subscription_id: u256) -> u256 {
             assert!(subscription_id >= 0, "Invalid subscription Id");
 
@@ -87,7 +92,7 @@ pub mod Starkloop {
                 amount: 0,
                 token_address: subscription.token_address,
                 periodicity: 0,
-                next_payment: 0,
+                last_payment: 0,
                 is_active: false
             };
 
@@ -109,7 +114,7 @@ pub mod Starkloop {
                 amount: subscription.amount,
                 token_address: subscription.token_address,
                 periodicity: subscription.periodicity,
-                next_payment: subscription.next_payment,
+                last_payment: subscription.last_payment,
                 is_active: subscription.is_active
             };
 
@@ -135,6 +140,21 @@ pub mod Starkloop {
         fn approve(self: @ContractState, erc20_contract: ContractAddress, amount: u256) {
             IERC20Dispatcher { contract_address: erc20_contract }
                 .approve(get_contract_address(), amount);
+        }
+
+        fn make_schedule_payment(ref self: ContractState, subscription_id: u256) {
+
+            // add onwer check here, only admin or owner can trigger
+            let subscription = self.subscriptions.entry(subscription_id).read();
+
+            assert(subscription.is_active == true, 'inactive subscription');
+
+            let last_block_ts = get_block_timestamp();
+            let last_block_ts_u256 = convert_u64_to_u256(last_block_ts);
+
+            assert(last_block_ts_u256 >= (subscription.last_payment + subscription.periodicity), 'already payed');
+
+            // To be done (work in progress)
         }
     }
 }

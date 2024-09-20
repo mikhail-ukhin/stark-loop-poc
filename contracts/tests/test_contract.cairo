@@ -30,7 +30,7 @@ fn test_create_subscription() {
         amount: 150_u256,
         token_address: eth_token_address,
         periodicity: 123_u256,
-        next_payment: 0_u256,
+        last_payment: 0_u256,
         is_active: true
     };
     let first_subscription_id = dispatcher.create_subscription(subscription);
@@ -44,7 +44,7 @@ fn test_create_subscription() {
                 amount: 150_u256,
                 token_address: eth_token_address,
                 periodicity: 453_u256,
-                next_payment: 0_u256,
+                last_payment: 0_u256,
                 is_active: true
             }
         );
@@ -73,7 +73,7 @@ fn test_get_subscription() {
         amount: 150_u256,
         token_address: eth_token_address,
         periodicity: 1000_u256,
-        next_payment: 0_u256,
+        last_payment: 0_u256,
         is_active: true
     };
     let subscription2 = Subscription {
@@ -82,7 +82,7 @@ fn test_get_subscription() {
         amount: 230_u256,
         token_address: eth_token_address,
         periodicity: 2456_u256,
-        next_payment: 0_u256,
+        last_payment: 0_u256,
         is_active: true
     };
 
@@ -124,7 +124,7 @@ fn test_remove_subscription() {
         amount: 150_u256,
         token_address: eth_token_address,
         periodicity: 1000_u256,
-        next_payment: 0_u256,
+        last_payment: 0_u256,
         is_active: true
     };
 
@@ -141,5 +141,5 @@ fn test_remove_subscription() {
     assert(removed_subscription.is_active == false, 'it is still active');
     assert(removed_subscription.amount == 0_u256, 'Wrong amount');
     assert(removed_subscription.periodicity == 0_u256, 'Wrong periodicity');
-    assert(removed_subscription.next_payment == 0_u256, 'Wrong next_payment');
+    assert(removed_subscription.last_payment == 0_u256, 'Wrong last_payment');
 }
