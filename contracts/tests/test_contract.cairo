@@ -2,6 +2,7 @@ use core::starknet::SyscallResultTrait;
 use snforge_std::{declare, test_address, start_cheat_caller_address, ContractClassTrait};
 use contracts::starkloop::{Subscription, IStarkloopDispatcher, IStarkloopDispatcherTrait};
 use starknet::{ContractAddress, contract_address_const};
+use starknet::contract_address::ContractAddressZeroable;
 
 fn deploy_contract() -> ContractAddress {
     let contract = declare("Starkloop").unwrap();
@@ -127,6 +128,24 @@ fn test_get_subscription() {
     assert(second_subscription.recipient == user1, 'Wrong recipient');
     assert(second_subscription.amount == 230_u256, 'Wrong amount');
     assert(second_subscription.token_address == usdc_token_address, 'Wrong token');
+}
+
+#[test]
+fn test_undefined_subscription() {
+    let contract_address =  deploy_contract();
+    let dispatcher = IStarkloopDispatcher { contract_address };
+
+    let empty_subscription = Subscription {
+        user: ContractAddressZeroable::zero(),
+        recipient: ContractAddressZeroable::zero(),
+        amount: 0_u256,
+        token_address: ContractAddressZeroable::zero(),
+        periodicity: 0_u64,
+        last_payment: 0_u64,
+        is_active: false
+    };
+    let undefined_subscription = dispatcher.get_subscription(8_u256);
+    assert(undefined_subscription == empty_subscription, 'transaction should not exist')
 }
 
 #[test]
