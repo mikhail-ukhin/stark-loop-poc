@@ -1,5 +1,12 @@
-/frontend/node_modules
+
+
+/node_modules
 snfoundry.toml
 
 /frontend/.env
 /frontend/.next
+
+.env
+
+/frontend/node_modules
+/contracts/scripts/deploy/node_modules

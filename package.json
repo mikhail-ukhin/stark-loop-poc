@@ -21,7 +21,7 @@
     "migrate-dojo": "cd contracts/${npm_config_name} && sozo migrate apply",
     "devnet": "sh ./devnet/start.sh",
     "start": "cd frontend && npm run dev",
-    "install": "cd scripts && bash install_tools.sh && cd ../frontend && npm install --legacy-peer-deps",
+    "install": "npm install --legacy-peer-deps",
     "build-ui": "cd frontend && npm run build"
   },
   "repository": {
@@ -34,10 +34,13 @@
     "Starknet-react",
     "Starknetkit"
   ],
-  "author": "Darlington Nnam",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/horuslabsio/Starknet-Scaffold/issues"
+  "dependencies": {
+    "@tsconfig/node21": "21.0.3",
+    "dotenv": "16.4.5",
+    "starknet": "^7.0.0",
+    "ts-node": "10.9.2",
+    "tslib": "^2.7.0",
+    "typescript": "5.5.4"
   },
-  "homepage": "https://github.com/horuslabsio/Starknet-Scaffold#readme"
+  "license": "ISC"
 }
