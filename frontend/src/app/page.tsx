@@ -20,8 +20,10 @@ const Page: FC = () => {
             <h2 className="text-lg font-medium text-gray-700 mb-2">Wallet Connection</h2>
             <WalletBar />
 
-            <SubscriptionForm />
-          </div>          
+            
+          </div>      
+
+          <SubscriptionForm />    
         
         </div>
       </div>

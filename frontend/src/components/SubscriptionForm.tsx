@@ -1,14 +1,12 @@
 import { STRK_LOOP_ABI } from "../abis/strk-loop-abi";
-import { FC, useMemo, useState } from 'react';
+import { FC, useMemo, useState, useEffect } from 'react';
 import { type Abi } from "starknet";
-import { useAccount, useBalance, useBlockNumber, useContract, useReadContract, useSendTransaction, useTransactionReceipt } from '@starknet-react/core';
-
+import { useAccount, useContract, useSendTransaction, useTransactionReceipt } from '@starknet-react/core';
 
 const SubscriptionForm: React.FC = () => {
     const { address } = useAccount();
 
     const contract_address = '0x00dd86c48fcae7c016fff8ce52b348da44c5a60ed9d7023d145f0e498bf93b01';
-
     const typedABI = STRK_LOOP_ABI as Abi;
 
     const { contract } = useContract({
@@ -16,33 +14,47 @@ const SubscriptionForm: React.FC = () => {
         address: contract_address,
     });
 
-    const subscription = {
-        user: address, // ContractAddress of the user (hex string)
-        recipient: '0x00fd273C8b4fe5dC449dFDc2eb248bf0B602C8577AC8983bF45c8F5F4e69f8d9', // recipient ContractAddress (hex string)
+    useEffect(() => {
+        if (address) {
+            setSubscription((prevSubscription) => ({
+                ...prevSubscription,
+                user: address, // Set the user field to the current address
+            }));
+        }
+    }, [address]);
+
+    let [subscription, setSubscription] = useState({
+        user: '',
+        recipient: '',
         amount: {
-            low: '10',  // u256 represented as { low, high }
-            high: '0',  // Since it's a small amount, high is 0
+            low: 0,
+            high: 0,
         },
-        token_address: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d', // ContractAddress of the token (hex string)
-        periodicity: '30', // u64 periodicity (as string, seconds between payments)
-        last_payment: '0', // u64 last payment (initially set to 0 for a new subscription)
-        is_active: true, // Boolean value (true or false)
-    };
+        token_address: '',
+        periodicity: 0,
+        last_payment: 0,
+        is_active: true,
+    });
 
     const calls = useMemo(() => {
-        if (!address || !contract) return [];
+        // return [];
+        if (
+            !address || 
+            !contract || 
+            !subscription.recipient || 
+            !subscription.amount.low || 
+            !subscription.token_address || 
+            !subscription.periodicity || 
+            subscription.periodicity <= 0 ||
+            !subscription.user
+        ) { 
+            return []; 
+        }
 
-        return [contract.populate(
-            "create_subscription",
-            [subscription]
-        )];
+        return [contract.populate("create_subscription", [subscription])];
     }, [contract, address, subscription]);
 
-    const {
-        send: writeAsync,
-        data: writeData,
-        isPending: writeIsPending,
-    } = useSendTransaction({
+    const { send: writeAsync, data: writeData, isPending: writeIsPending } = useSendTransaction({
         calls,
     });
 
@@ -51,8 +63,7 @@ const SubscriptionForm: React.FC = () => {
         status: waitStatus,
         isLoading: waitIsLoading,
         isError: waitIsError,
-        error: waitError
-    } = useTransactionReceipt({ hash: writeData?.transaction_hash, watch: true })
+    } = useTransactionReceipt({ hash: writeData?.transaction_hash, watch: true });
 
     const LoadingState = ({ message }: { message: string }) => (
         <div className="flex items-center space-x-2">
@@ -67,13 +78,12 @@ const SubscriptionForm: React.FC = () => {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
         writeAsync();
     };
 
     const buttonContent = () => {
         if (writeIsPending) {
-            return <LoadingState message="Send..." />;
+            return <LoadingState message="Sending..." />;
         }
 
         if (waitIsLoading) {
@@ -81,7 +91,7 @@ const SubscriptionForm: React.FC = () => {
         }
 
         if (waitStatus === "error") {
-            return <LoadingState message="Transaction rejected..." />;
+            return <LoadingState message="Transaction rejected" />;
         }
 
         if (waitStatus === "success") {
@@ -91,34 +101,84 @@ const SubscriptionForm: React.FC = () => {
         return "Send";
     };
 
-    // Do not render anything if balanceData is not available
+    // Token options for the dropdown
+    const tokenOptions = [
+        { label: 'STRK', value: '0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766' },
+        { label: 'USDC', value: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' },
+        { label: 'DAI', value: '0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357' },
+    ];
+
     if (!address) {
         return null;
     }
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white p-4 border-black border">
-            <h3 className="text-lg font-bold mb-2">Write to Contract</h3>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Amount:</label>
+        <form onSubmit={handleSubmit} className="bg-gray-50 p-6 rounded-lg border border-gray-300 shadow-sm max-w-md mx-auto">
+            <h3 className="text-xl font-medium text-gray-800 mb-4">Create Subscription</h3>
+
+            <label htmlFor="recipient" className="block text-sm font-medium text-gray-700 mb-2">Recipient</label>
+            <input
+                type="text"
+                id="recipient"
+                value={subscription.recipient}
+                onChange={(e) => setSubscription({ ...subscription, recipient: e.target.value })}
+                className="block w-full px-3 py-2 text-sm text-gray-800 leading-6 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-300 focus:outline-none"
+            />
+
+            <label htmlFor="amount-low" className="block text-sm font-medium text-gray-700 mb-2 mt-4">Amount</label>
+            <input
+                type="number"
+                id="amount-low"
+                value={subscription.amount.low}
+                onChange={(e) => setSubscription({
+                    ...subscription,
+                    amount: { ...subscription.amount, low: parseInt(e.target.value, 10) || 0 }
+                })}
+                className="block w-full px-3 py-2 text-sm text-gray-800 leading-6 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-300 focus:outline-none"
+            />
+
+            <label htmlFor="token_address" className="block text-sm font-medium text-gray-700 mb-2 mt-4">Token</label>
+            <select
+                id="token_address"
+                value={subscription.token_address}
+                onChange={(e) => setSubscription({ ...subscription, token_address: e.target.value })}
+                className="block w-full px-3 py-2 text-sm text-gray-800 leading-6 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-300 focus:outline-none"
+            >
+                {tokenOptions.map((token) => (
+                    <option key={token.value} value={token.value}>
+                        {token.label}
+                    </option>
+                ))}
+            </select>
+
+            <label htmlFor="periodicity" className="block text-sm font-medium text-gray-700 mb-2 mt-4">Periodicity (in seconds)</label>
+            <input
+                type="number"
+                id="periodicity"
+                value={subscription.periodicity}
+                onChange={(e) => setSubscription({ ...subscription, periodicity: parseInt(e.target.value, 10) || 0 })}
+                className="block w-full px-3 py-2 text-sm text-gray-800 leading-6 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-300 focus:outline-none"
+            />
 
             <button
-              type="submit"
-              className="mt-3 border border-black text-black font-regular py-2 px-4 bg-yellow-300 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
-              disabled={!address || writeIsPending}
+                type="submit"
+                className="mt-4 w-full border border-gray-300 text-gray-800 font-medium py-2 px-4 bg-yellow-300 rounded-md hover:bg-yellow-400 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
+                disabled={!address || writeIsPending}
             >
-              {buttonContent()}
+                {buttonContent()}
             </button>
+
             {writeData?.transaction_hash && (
-              <a
-                href={`https://sepolia.voyager.online/tx/${writeData?.transaction_hash}`}
-                target="_blank"
-                className="block mt-2 text-blue-500 hover:text-blue-700 underline"
-                rel="noreferrer"
-              >
-                Check TX on Sepolia
-              </a>
+                <a
+                    href={`https://sepolia.voyager.online/tx/${writeData?.transaction_hash}`}
+                    target="_blank"
+                    className="block mt-4 text-blue-500 hover:text-blue-700 underline"
+                    rel="noreferrer"
+                >
+                    Check TX on Sepolia
+                </a>
             )}
-          </form>
+        </form>
     );
 };
 
