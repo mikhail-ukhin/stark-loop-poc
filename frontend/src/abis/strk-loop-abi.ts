@@ -348,4 +348,4 @@ export const STRK_LOOP_ABI = [
         }
       ]
     }
-  ]
+  ] as const
