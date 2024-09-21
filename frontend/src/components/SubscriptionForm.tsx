@@ -47,6 +47,19 @@ const SubscriptionForm: FC = () => {
         return [contract.populate("create_subscription", [subscription])];
     }, [contract, address, subscription]);
 
+    // Prepare contract calls only when all fields are valid
+    const callsApproval = useMemo(() => {
+        const { recipient, amount, token_address, periodicity, user } = subscription;
+        if (!address || !contract || !recipient || !amount.low || !token_address || !periodicity || periodicity <= 0 || !user) {
+            return [];
+        }
+        return [contract.populate("approve", [token_address, amount.low * 5])];
+    }, [contract, address, subscription]);
+
+    const { send: writeApprovalAsync, data: writeApprovalData, isPending: writeApprovalIsPending } = useSendTransaction({ calls: callsApproval });
+
+    const { status: waitApprovalStatus, isLoading: waitApprovalIsLoading, isError: waitApprovalIsError } = useTransactionReceipt({ hash: writeApprovalData?.transaction_hash, watch: true });
+
     // Send transaction
     const { send: writeAsync, data: writeData, isPending: writeIsPending } = useSendTransaction({ calls });
 
@@ -56,6 +69,9 @@ const SubscriptionForm: FC = () => {
     // Form submission handler
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        // writeApprovalAsync();
+
         writeAsync();
     };
 
