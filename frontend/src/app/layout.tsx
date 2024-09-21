@@ -1,24 +1,13 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { Providers } from "@/components/Providers";
 import "./globals.css";
-import { StarknetProvider } from "~/StarknetProvider";
-import Footer from "./components/internal/Footer";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "STRKloop",
-  description:
-    "STRKloop",
-  openGraph: {
-    title: "STRKloop",
-    description:
-      "",
-    url: "",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "STRKloop",
-    description:
-      "",
-  },
+  title: "Basecamp X",
+  description: "Starknet Frontend Workshop",
 };
 
 export default function RootLayout({
@@ -28,9 +17,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-coolvetica text-sm text-text-primary md:text-md">
-        <StarknetProvider>{children}</StarknetProvider>
-        <Footer />
+      <body className={inter.className}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
