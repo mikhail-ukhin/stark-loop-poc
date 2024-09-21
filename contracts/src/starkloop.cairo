@@ -6,6 +6,7 @@
 
 use starknet::ContractAddress;
 
+
 // Structure to hold subscription details
 #[derive(Drop, Debug, PartialEq, Serde, starknet::Store)]
 pub struct Subscription {
@@ -14,19 +15,24 @@ pub struct Subscription {
     amount: u256, // Amount of tokens to be transfert to the recipient 
     token_address: ContractAddress, // Address of the ERC-20 token contract 
     periodicity: u64, // Periodicity of payments in seconds 
-    last_payment: u64, // Timestamp of the next payment 
-    is_active: bool, // The subscription is active
+    expires_on: u64, // Expiration timestamp
+    last_payment: u64, // Timestamp of the last payment made 
+    is_active: bool, // The subscription is active (user could pause subscription - not implemented at the moment)
 }
+
 
 #[starknet::interface]
 pub trait IStarkloop<TContractState> {
     fn create_subscription(ref self: TContractState, subscription: Subscription) -> u256;
     fn get_subscription(self: @TContractState, subscription_id: u256) -> Subscription;
     fn get_subscriptions(self: @TContractState, user: ContractAddress) -> Array<Subscription>;
+    fn get_subscription_ids(self: @TContractState, user: ContractAddress) -> Array<u256>;
     fn remove_subscription(ref self: TContractState, subscription_id: u256) -> u256;
     fn approve(self: @TContractState, erc20_contract: ContractAddress, amount: u256);
     fn make_schedule_payment(ref self: TContractState, subscription_id: u256);
-    fn update_subscription(ref self: TContractState, subscription_id: u256, subscription: Subscription);
+    fn update_subscription(
+        ref self: TContractState, subscription_id: u256, subscription: Subscription
+    );
     fn check_due_payments(ref self: TContractState);
 }
 
@@ -48,9 +54,11 @@ pub mod Starkloop {
 
     #[storage]
     struct Storage {
+        // FIXME : users maps is not used. It should be used to get the Subscription list for a user.
         users: Map::<
             ContractAddress, Vec<u256>
         >, // Map the address of each user to their subscription id list
+        // Map the address of each user to their subscription id list
         subscriptions: Map<u256, super::Subscription>, // Map subscription id to Subscription
         next_subscription_id: u256,
         #[substorage(v0)]
@@ -90,21 +98,42 @@ pub mod Starkloop {
     #[abi(embed_v0)]
     impl StarkloopImpl of super::IStarkloop<ContractState> {
 
-        fn get_subscriptions(self: @ContractState, user: ContractAddress) -> Array<super::Subscription> {
-            let mut subscription_id = 0_u256;
-            let mut arr = ArrayTrait::<super::Subscription>::new();
-        
+        fn  get_subscription_ids(self: @ContractState, user: ContractAddress) -> Array<u256> {
+            let mut result: Array<u256> = ArrayTrait::new();
+    
+            let mut id_index = 1;
+            let last_id_index = self.next_subscription_id.read();
             loop {
-                if subscription_id >= self.next_subscription_id.read() {
+                if id_index > last_id_index {
                     break;
                 }
-        
-                let subscription = self.subscriptions.read(subscription_id);
-        
+                let subscription = self.subscriptions.entry(id_index).read();
+                if (subscription.user == user) {
+                    result.append(id_index);
+                }
+                id_index = id_index + 1;
+            };
+            
+            result
+        }
+
+        fn get_subscriptions(
+            self: @ContractState, user: ContractAddress
+        ) -> Array<super::Subscription> {
+            let mut subscription_id = 0_u256;
+            let mut arr = ArrayTrait::<super::Subscription>::new();
+
+            loop {
+                if subscription_id > self.next_subscription_id.read() {
+                    break;
+                }
+
+                let subscription = self.subscriptions.entry(subscription_id).read();
+
                 if subscription.is_active && subscription.user == user {
                     arr.append(subscription);
                 }
-        
+
                 subscription_id += 1_u256;
             };
 
@@ -122,6 +151,7 @@ pub mod Starkloop {
                 amount: 0,
                 token_address: subscription.token_address,
                 periodicity: 0,
+                expires_on: 0,
                 last_payment: 0,
                 is_active: false
             };
@@ -144,11 +174,16 @@ pub mod Starkloop {
                 amount: subscription.amount,
                 token_address: subscription.token_address,
                 periodicity: subscription.periodicity,
+                expires_on: subscription.expires_on,
                 last_payment: subscription.last_payment,
                 is_active: subscription.is_active
             };
 
-            // Writing the struct to storage
+            // // Append the subscription id in the Vec for the user.
+            // let user_copy = subscription.user;
+            // self.users.entry(user_copy).append().write(next_subscription_id);
+
+            // Write the struct to storage
             self.subscriptions.entry(next_subscription_id).write(subscription);
 
             // Emit the event
@@ -181,19 +216,25 @@ pub mod Starkloop {
 
             let last_block_ts = get_block_timestamp();
 
-            assert(last_block_ts >= (subscription.last_payment + subscription.periodicity), 'already payed');
+            assert(
+                last_block_ts >= (subscription.last_payment + subscription.periodicity),
+                'already payed'
+            );
 
-            let erc20 = IERC20Dispatcher { contract_address: subscription.token_address };            
-            let success = erc20.transfer_from(subscription.user, subscription.recipient, subscription.amount);
-            
+            let erc20 = IERC20Dispatcher { contract_address: subscription.token_address };
+            let success = erc20
+                .transfer_from(subscription.user, subscription.recipient, subscription.amount);
+
             assert(success, 'Transfer failed');
-            
+
             subscription.last_payment = last_block_ts;
-            
+
             self.update_subscription(subscription_id, subscription);
         }
 
-        fn update_subscription(ref self: ContractState, subscription_id: u256, subscription: super::Subscription) {
+        fn update_subscription(
+            ref self: ContractState, subscription_id: u256, subscription: super::Subscription
+        ) {
             assert!(subscription_id >= 0, "Invalid subscription Id");
 
             self.subscriptions.entry(subscription_id).write(subscription);
@@ -201,24 +242,21 @@ pub mod Starkloop {
 
         fn check_due_payments(ref self: ContractState) {
             let last_block_ts = get_block_timestamp();
-            
+
             let mut subscription_id = 0_u256;
-        
+
             loop {
                 if subscription_id >= self.next_subscription_id.read() {
                     break;
                 }
-        
+
                 let subscription = self.subscriptions.read(subscription_id);
-        
-                if subscription.is_active && last_block_ts >= (subscription.last_payment + subscription.periodicity) {
-                    
-                    self.emit(DuePayment { 
-                        id: subscription_id,
-                        time: last_block_ts
-                    });
+
+                if subscription.is_active
+                    && last_block_ts >= (subscription.last_payment + subscription.periodicity) {
+                    self.emit(DuePayment { id: subscription_id, time: last_block_ts });
                 }
-        
+
                 subscription_id += 1_u256;
             }
         }
