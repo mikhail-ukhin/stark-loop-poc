@@ -20,6 +20,15 @@ pub struct Subscription {
     is_active: bool, // The subscription is active (user could pause subscription - not implemented at the moment)
 }
 
+trait SubscriptionTrait {
+    fn new(user: ContractAddress, recipient: ContractAddress, amount: u256, token_address: ContractAddress, periodicity: u64, expires_on: u64, last_payment: u64, is_active: bool) -> Subscription;
+}
+
+impl SubscriptionImpl of SubscriptionTrait {
+    fn new(user: ContractAddress, recipient: ContractAddress, amount: u256, token_address: ContractAddress, periodicity: u64, expires_on: u64, last_payment: u64, is_active: bool) -> Subscription {
+        Subscription { user, recipient, amount, token_address, periodicity, expires_on, last_payment, is_active }
+    }
+}
 
 #[starknet::interface]
 pub trait IStarkloop<TContractState> {
