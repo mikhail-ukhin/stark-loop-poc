@@ -18,7 +18,7 @@ const WalletBar: React.FC = () => {
             <button
               key={connector.id}
               onClick={() => connect({ connector })}
-              className="border border-gray-300 text-gray-700 font-medium py-2 px-4 bg-gray-50 rounded-md hover:bg-gray-100 shadow-sm transition-all"
+              className="border border-gray-300 text-gray-700 font-medium py-2 px-4 bg-green-150 rounded-md hover:bg-yellow-150 shadow-sm transition-all"
             >
               Connect {connector.id}
             </button>
