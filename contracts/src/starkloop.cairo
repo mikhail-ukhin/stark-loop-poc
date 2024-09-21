@@ -27,7 +27,7 @@ pub trait IStarkloop<TContractState> {
     fn approve(self: @TContractState, erc20_contract: ContractAddress, amount: u256);
     fn make_schedule_payment(ref self: TContractState, subscription_id: u256);
     fn update_subscription(ref self: TContractState, subscription_id: u256, subscription: Subscription);
-    fn check_due_payments(self: @TContractState);
+    fn check_due_payments(ref self: TContractState);
 }
 
 #[starknet::contract]
@@ -199,7 +199,7 @@ pub mod Starkloop {
             self.subscriptions.entry(subscription_id).write(subscription);
         }
 
-        fn check_due_payments(self: @ContractState) {
+        fn check_due_payments(ref self: ContractState) {
             let last_block_ts = get_block_timestamp();
             
             let mut subscription_id = 0_u256;

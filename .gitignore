@@ -12,3 +12,4 @@ snfoundry.toml
 /contracts/scripts/deploy/node_modules
 /contracts/scripts/deploy/artifacts
 frontend/.env.local
+.DS_Store

@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": "true",
   "scripts": {
-    "deploy": "ts-node deploy.ts",
-    "abi": "ts-node generate_abi.ts"
+    "deploy": "npx tsx deploy.ts",
+    "abi-gen": "npx tsx generate_abi.ts"
   },
   "dependencies": {
     "@tsconfig/node21": "21.0.3",
@@ -13,5 +13,8 @@
     "ts-node": "10.9.2",
     "tslib": "^2.7.0",
     "typescript": "5.5.4"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.1"
   }
 }

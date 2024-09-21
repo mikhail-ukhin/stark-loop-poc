@@ -1,4 +1,7 @@
+import { Account, CallData, Contract, RpcProvider, stark } from "starknet";
+import * as dotenv from "dotenv";
 import { getCompiledCode } from "./utils";
+// dotenv.config();
 import * as fs from 'fs';
 
 
