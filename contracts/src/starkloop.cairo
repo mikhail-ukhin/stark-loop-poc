@@ -22,6 +22,7 @@ pub struct Subscription {
 pub trait IStarkloop<TContractState> {
     fn create_subscription(ref self: TContractState, subscription: Subscription) -> u256;
     fn get_subscription(self: @TContractState, subscription_id: u256) -> Subscription;
+    fn get_subscriptions(self: @TContractState, user: ContractAddress) -> Array<Subscription>;
     fn remove_subscription(ref self: TContractState, subscription_id: u256) -> u256;
     fn approve(self: @TContractState, erc20_contract: ContractAddress, amount: u256);
     fn make_schedule_payment(ref self: TContractState, subscription_id: u256);
@@ -88,6 +89,27 @@ pub mod Starkloop {
 
     #[abi(embed_v0)]
     impl StarkloopImpl of super::IStarkloop<ContractState> {
+
+        fn get_subscriptions(self: @ContractState, user: ContractAddress) -> Array<super::Subscription> {
+            let mut subscription_id = 0_u256;
+            let mut arr = ArrayTrait::<super::Subscription>::new();
+        
+            loop {
+                if subscription_id >= self.next_subscription_id.read() {
+                    break;
+                }
+        
+                let subscription = self.subscriptions.read(subscription_id);
+        
+                if subscription.is_active && subscription.user == user {
+                    arr.append(subscription);
+                }
+        
+                subscription_id += 1_u256;
+            };
+
+            arr
+        }
 
         fn remove_subscription(ref self: ContractState, subscription_id: u256) -> u256 {
             assert!(subscription_id >= 0, "Invalid subscription Id");

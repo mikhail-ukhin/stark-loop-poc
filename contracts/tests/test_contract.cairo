@@ -185,3 +185,33 @@ fn test_remove_subscription() {
     assert(removed_subscription.periodicity == 0_u64, 'Wrong periodicity');
     assert(removed_subscription.last_payment == 0_u64, 'Wrong last_payment');
 }
+
+#[test]
+fn test_get_subscriptions() {
+    let contract_address =  deploy_contract();
+
+    let dispatcher = IStarkloopDispatcher { contract_address };
+
+    let user1 = contract_address_const::<'user1'>();
+    let user2 = contract_address_const::<'user2'>();
+
+    let eth_token_address = contract_address_const::<'fakeETH'>(); // Fake address for the ETH token
+
+    let subscription1 = Subscription {
+        user: user1,
+        recipient: user2,
+        amount: 150_u256,
+        token_address: eth_token_address,
+        periodicity: 1000_u64,
+        last_payment: 0_u64,
+        is_active: true
+    };
+
+    start_cheat_caller_address(contract_address, user1);
+
+    let first_subscription_id = dispatcher.create_subscription(subscription1);
+
+    let subscriptions = dispatcher.get_subscriptions(user1);
+
+    assert(subscriptions.is_empty() == false, 'subscription not found')
+}
