@@ -10,3 +10,4 @@ snfoundry.toml
 
 /frontend/node_modules
 /contracts/scripts/deploy/node_modules
+/contracts/scripts/deploy/artifacts
