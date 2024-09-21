@@ -31,16 +31,16 @@ const WalletBar: React.FC = () => {
           </div>
           
           {/* Display Balance when Wallet is Connected and Balance Data is Available */}
-          {!balanceIsLoading && !balanceIsError && balanceData && (
+          {/* {!balanceIsLoading && !balanceIsError && balanceData && (
             <div className="text-sm text-gray-700">
               <p className="text-gray-600">Symbol: {balanceData?.symbol}</p>
               <p className="text-gray-600">Balance: {Number(balanceData?.formatted).toFixed(4)}</p>
             </div>
-          )}
+          )} */}
 
           <button
             onClick={() => disconnect()}
-            className="border border-gray-300 text-gray-700 font-medium py-2 px-4 bg-gray-50 rounded-md hover:bg-gray-100 shadow-sm transition-all"
+            className="border border-gray-300 text-gray-700 font-medium py-2 px-4 bg-yellow-100 rounded-md hover:bg-yellow-750 shadow-sm transition-all"
           >
             Disconnect
           </button>
