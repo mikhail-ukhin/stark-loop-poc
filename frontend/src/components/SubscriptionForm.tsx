@@ -35,9 +35,9 @@ const SubscriptionForm: FC = () => {
 
     // Token options
     const tokenOptions = [
-        { label: 'STRK', value: '0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766' },
-        { label: 'USDC', value: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' },
-        { label: 'DAI', value: '0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357' },
+        { label: 'STRK', value: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d' },
+        { label: 'USDC', value: '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8' },
+        { label: 'DAI', value: '0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3' },
     ];
 
     // Handle change for the expires_on input
@@ -83,7 +83,8 @@ const SubscriptionForm: FC = () => {
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        writeAsync();
+        writeApprovalAsync();
+        // writeAsync();
     };
 
     // Render status messages based on transaction state

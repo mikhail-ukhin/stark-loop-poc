@@ -13,3 +13,4 @@ snfoundry.toml
 /contracts/scripts/deploy/artifacts
 frontend/.env.local
 .DS_Store
+backend/__debug_bin*
