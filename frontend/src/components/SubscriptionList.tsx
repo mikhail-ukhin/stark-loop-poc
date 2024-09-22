@@ -19,7 +19,7 @@ const SubscriptionList: React.FC = () => {
     abi: typedABI,
     address: contract_address,
     watch: true,
-    refetchInterval: 1000
+    refetchInterval: 15000
   });
 
   if (!address) return null;
