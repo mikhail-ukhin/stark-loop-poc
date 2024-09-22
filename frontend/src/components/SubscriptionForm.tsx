@@ -2,6 +2,7 @@ import { FC, useMemo, useState, useEffect } from 'react';
 import { useAccount, useContract, useSendTransaction, useTransactionReceipt } from '@starknet-react/core';
 import { STRK_LOOP_ABI } from "../abis/strk-loop-abi";
 import { type Abi } from "starknet";
+import { convertToHexString } from '@/lib/utils';
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
@@ -127,8 +128,8 @@ const SubscriptionForm: FC = () => {
             <h3 className="text-xl font-medium text-gray-800 mb-4">Create Subscription</h3>
 
             {/* Form Fields */}
-            {renderInput("recipient", "Recipient", subscription.recipient, (e) => setSubscription({ ...subscription, recipient: e.target.value }))}
-            {renderInput("amount-low", "Amount (Low)", subscription.amount.low, (e) => setSubscription({ ...subscription, amount: { ...subscription.amount, low: parseInt(e.target.value, 10) || 0 } }), "number")}
+            {renderInput("recipient", "Recipient", subscription.recipient, (e: any) => setSubscription({ ...subscription, recipient: e.target.value }))}
+            {renderInput("amount-low", "Amount (Low)", subscription.amount.low, (e: any) => setSubscription({ ...subscription, amount: { ...subscription.amount, low: parseInt(e.target.value, 10) || 0 } }), "number")}
 
             {/* Token Selection */}
             <label htmlFor="token_address" className="block text-sm font-medium text-gray-700 mb-2 mt-4">Token</label>
@@ -145,7 +146,7 @@ const SubscriptionForm: FC = () => {
                 ))}
             </select>
 
-            {renderInput("periodicity", "Periodicity (in seconds)", subscription.periodicity, (e) => setSubscription({ ...subscription, periodicity: parseInt(e.target.value, 10) || 0 }), "number")}
+            {renderInput("periodicity", "Periodicity (in seconds)", subscription.periodicity, (e: any) => setSubscription({ ...subscription, periodicity: parseInt(e.target.value, 10) || 0 }), "number")}
 
             {/* Expires On Field */}
             <label htmlFor="expires_on" className="block text-sm font-medium text-gray-700 mb-2 mt-4">Expires On</label>

@@ -20,6 +20,7 @@ export function Providers({ children }: { children: ReactNode }) {
     // Randomize the order of the connectors.
     order: "random",
   });
+
   return (
     <StarknetConfig
       chains={[sepolia]}
