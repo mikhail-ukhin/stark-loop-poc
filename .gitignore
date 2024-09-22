@@ -1,16 +1,13 @@
 
-
-/node_modules
+node_modules
 snfoundry.toml
 
 /frontend/.env
 /frontend/.next
 
-.env
-
-/frontend/node_modules
-/contracts/scripts/deploy/node_modules
-/contracts/scripts/deploy/artifacts
-frontend/.env.local
+.env*
 .DS_Store
-backend/__debug_bin*
+
+package-lock.json
+
+artifacts

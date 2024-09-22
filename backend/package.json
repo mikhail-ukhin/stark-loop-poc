@@ -1,0 +1,26 @@
+{
+  "name": "strk-loop-svc",
+  "version": "1.0.0",
+  "main": "main.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^22.5.5",
+    "dotenv": "^16.4.5",
+    "ts-jest": "^29.2.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4",
+    "tsx": "^4.19.1"
+  },
+  "dependencies": {
+    "cross-port-killer": "^1.4.0",
+    "fs": "^0.0.1-security",
+    "starknet": "^6.11.0",
+    "starknet-devnet": "^0.1.1",
+    "starknet-merkle-tree": "^1.0.2"
+  }
+}
