@@ -16,7 +16,7 @@ const SubscriptionForm: FC = () => {
         user: '',
         recipient: '',
         amount: { low: 0, high: 0 },
-        token_address: '',
+        token_address: '0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766',
         periodicity: 0,
         expires_on: 0,
         last_payment: 0,
