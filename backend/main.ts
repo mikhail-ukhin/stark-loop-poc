@@ -4,7 +4,7 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const CONTRACT_PATH = "./artifacts/contracts_Starkloop.contract_class.json";
+const CONTRACT_PATH = "./artifacts/abi.json";
 const CHECK_INTERVAL_MS = 30 * 1000; // 30 seconds
 
 let serviceAccount: Account;
@@ -35,10 +35,10 @@ async function connectAccount() {
 // Function to load the contract
 async function getContract() {
     const testAddress = process.env.CONTRACT;
-    const contractFile = fs.readFileSync(CONTRACT_PATH).toString("ascii");
-    const compiledTest = json.parse(contractFile);
+    const abiFile = fs.readFileSync(CONTRACT_PATH).toString("ascii");
+    const abi = json.parse(abiFile);
 
-    loopContract = new Contract(compiledTest.abi, testAddress, myProvider);
+    loopContract = new Contract(abi, testAddress, myProvider);
     loopContract.connect(serviceAccount);
 
     console.log("Contract connected.");
