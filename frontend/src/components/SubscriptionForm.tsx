@@ -5,7 +5,7 @@ import { type Abi } from "starknet";
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
-    const contract_address = '0x00dd86c48fcae7c016fff8ce52b348da44c5a60ed9d7023d145f0e498bf93b01';
+    const contract_address = '0x4187f2497247c92bb8d9b960f0fecb704d173525c3012316e0095a3454acde5';
     const typedABI = STRK_LOOP_ABI as Abi;
 
     const { contract } = useContract({ abi: typedABI, address: contract_address });
@@ -17,6 +17,7 @@ const SubscriptionForm: FC = () => {
         amount: { low: 0, high: 0 },
         token_address: '',
         periodicity: 0,
+        expires_on: 0,
         last_payment: 0,
         is_active: true,
     });
@@ -37,6 +38,17 @@ const SubscriptionForm: FC = () => {
         { label: 'USDC', value: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' },
         { label: 'DAI', value: '0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357' },
     ];
+
+    // Handle change for the expires_on input
+    const handleExpiresOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedDateTime = e.target.value;
+        const utcSeconds = Math.floor(new Date(selectedDateTime).getTime() / 1000);
+
+        setSubscription((prevSubscription) => ({
+            ...prevSubscription,
+            expires_on: utcSeconds,
+        }));
+    };
 
     // Prepare contract calls only when all fields are valid
     const calls = useMemo(() => {
@@ -69,8 +81,6 @@ const SubscriptionForm: FC = () => {
     // Form submission handler
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
-        // writeApprovalAsync();
 
         writeAsync();
     };
@@ -119,7 +129,7 @@ const SubscriptionForm: FC = () => {
             {/* Form Fields */}
             {renderInput("recipient", "Recipient", subscription.recipient, (e) => setSubscription({ ...subscription, recipient: e.target.value }))}
             {renderInput("amount-low", "Amount (Low)", subscription.amount.low, (e) => setSubscription({ ...subscription, amount: { ...subscription.amount, low: parseInt(e.target.value, 10) || 0 } }), "number")}
-            
+
             {/* Token Selection */}
             <label htmlFor="token_address" className="block text-sm font-medium text-gray-700 mb-2 mt-4">Token</label>
             <select
@@ -136,6 +146,15 @@ const SubscriptionForm: FC = () => {
             </select>
 
             {renderInput("periodicity", "Periodicity (in seconds)", subscription.periodicity, (e) => setSubscription({ ...subscription, periodicity: parseInt(e.target.value, 10) || 0 }), "number")}
+
+            {/* Expires On Field */}
+            <label htmlFor="expires_on" className="block text-sm font-medium text-gray-700 mb-2 mt-4">Expires On</label>
+            <input
+                type="datetime-local"
+                id="expires_on"
+                className="block w-full px-3 py-2 text-sm text-gray-800 leading-6 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-300 focus:outline-none"
+                onChange={handleExpiresOnChange}
+            />
 
             {/* Submit Button */}
             <button
