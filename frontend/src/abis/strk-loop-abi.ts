@@ -57,6 +57,10 @@ export const STRK_LOOP_ABI = [
         "type": "core::integer::u64"
       },
       {
+        "name": "expires_on",
+        "type": "core::integer::u64"
+      },
+      {
         "name": "last_payment",
         "type": "core::integer::u64"
       },
@@ -114,6 +118,22 @@ export const STRK_LOOP_ABI = [
         "outputs": [
           {
             "type": "core::array::Array::<contracts::starkloop::Subscription>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_subscription_ids",
+        "inputs": [
+          {
+            "name": "user",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::integer::u256>"
           }
         ],
         "state_mutability": "view"
