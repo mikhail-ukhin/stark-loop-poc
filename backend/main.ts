@@ -73,7 +73,7 @@ async function checkDuePayments() {
     }
 }
 
-// Main function to run the process and repeat it every 30 seconds
+// Main function to run the process and repeat it every N seconds
 async function main() {
     await connectAccount();   // Connect account
     await getContract();      // Load contract
@@ -88,7 +88,6 @@ async function main() {
     }, CHECK_INTERVAL_MS);
 }
 
-// Run the main function and handle any errors
 main()
     .then(() => console.log('Monitoring started...'))
     .catch((error) => {
