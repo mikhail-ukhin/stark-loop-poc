@@ -33,6 +33,7 @@ impl SubscriptionImpl of SubscriptionTrait {
 #[starknet::interface]
 pub trait IStarkloop<TContractState> {
     fn create_subscription(ref self: TContractState, subscription: Subscription) -> u256;
+    fn create_subscription_with_approve(ref self: TContractState, subscription: Subscription) -> u256;
     fn get_subscription(self: @TContractState, subscription_id: u256) -> Subscription;
     fn get_subscriptions(self: @TContractState, user: ContractAddress) -> Array<Subscription>;
     fn get_subscription_ids(self: @TContractState, user: ContractAddress) -> Array<u256>;
@@ -168,6 +169,11 @@ pub mod Starkloop {
             self.subscriptions.entry(subscription_id).write(disabled_subscription);
 
             subscription_id
+        }
+
+        fn create_subscription_with_approve(ref self: ContractState, subscription: super::Subscription) -> u256 {
+            self.approve(subscription.token_address, subscription.amount);
+            self.create_subscription(subscription)
         }
 
         fn create_subscription(ref self: ContractState, subscription: super::Subscription) -> u256 {

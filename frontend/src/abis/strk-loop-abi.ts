@@ -92,6 +92,22 @@ export const STRK_LOOP_ABI = [
       },
       {
         "type": "function",
+        "name": "create_subscription_with_approve",
+        "inputs": [
+          {
+            "name": "subscription",
+            "type": "contracts::starkloop::Subscription"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
         "name": "get_subscription",
         "inputs": [
           {

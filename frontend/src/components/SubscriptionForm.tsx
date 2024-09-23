@@ -6,7 +6,7 @@ import { convertToHexString } from '@/lib/utils';
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
-    const contract_address = '0x1e22f358d9449be5a45cfc423aa5a99627019eccec2607eb7a1c3eb4caf00f5';
+    const contract_address = '0x69335c342603205ced362dab88ca7a327e4dce8d0f74d2e9cef21aaf918a8cd';
     const typedABI = STRK_LOOP_ABI as Abi;
 
     const { contract } = useContract({ abi: typedABI, address: contract_address });
@@ -57,21 +57,21 @@ const SubscriptionForm: FC = () => {
         if (!address || !contract || !recipient || !amount.low || !token_address || !periodicity || periodicity <= 0 || !user) {
             return [];
         }
-        return [contract.populate("create_subscription", [subscription])];
+        return [contract.populate("create_subscription_with_approve", [subscription])];
     }, [contract, address, subscription]);
 
     // Prepare contract calls only when all fields are valid
-    const callsApproval = useMemo(() => {
-        const { recipient, amount, token_address, periodicity, user } = subscription;
-        if (!address || !contract || !recipient || !amount.low || !token_address || !periodicity || periodicity <= 0 || !user) {
-            return [];
-        }
-        return [contract.populate("approve", [token_address, amount.low * 5])];
-    }, [contract, address, subscription]);
+    // const callsApproval = useMemo(() => {
+    //     const { recipient, amount, token_address, periodicity, user } = subscription;
+    //     if (!address || !contract || !recipient || !amount.low || !token_address || !periodicity || periodicity <= 0 || !user) {
+    //         return [];
+    //     }
+    //     return [contract.populate("approve", [token_address, amount.low * 5])];
+    // }, [contract, address, subscription]);
 
-    const { sendAsync: writeApprovalAsync, data: writeApprovalData, isPending: writeApprovalIsPending } = useSendTransaction({ calls: callsApproval });
+    // const { sendAsync: writeApprovalAsync, data: writeApprovalData, isPending: writeApprovalIsPending } = useSendTransaction({ calls: callsApproval });
 
-    const { status: waitApprovalStatus, isLoading: waitApprovalIsLoading, isError: waitApprovalIsError } = useTransactionReceipt({ hash: writeApprovalData?.transaction_hash, watch: true });
+    // const { status: waitApprovalStatus, isLoading: waitApprovalIsLoading, isError: waitApprovalIsError } = useTransactionReceipt({ hash: writeApprovalData?.transaction_hash, watch: true });
 
     // Send transaction
     const { sendAsync: writeAsync, data: writeData, isPending: writeIsPending } = useSendTransaction({ calls });
@@ -83,7 +83,7 @@ const SubscriptionForm: FC = () => {
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        await writeApprovalAsync();
+        // await writeApprovalAsync();
         await writeAsync();
     };
 
