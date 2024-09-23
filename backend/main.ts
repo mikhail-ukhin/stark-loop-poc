@@ -83,12 +83,19 @@ async function handleDuePaymentEvents() {
     }
 }
 
+function toUint256(value: bigint) {
+    const mask = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    const low = value & mask;
+    const high = value >> BigInt(128);
+    return { low, high };
+}
+
 async function sendPayment(id: any) {
     try {
         const { suggestedMaxFee: estimatedFee } = await serviceAccount.estimateInvokeFee({
             contractAddress: loopContract.address,
             entrypoint: "make_schedule_payment",
-            calldata: [id],
+            calldata: [toUint256(id)],
         });
 
         const result = await loopContract.invoke("make_schedule_payment", [id], { maxFee: estimatedFee });
@@ -116,3 +123,7 @@ main()
         console.error('Error in main execution:', error);
         process.exit(1);
     });
+
+
+
+    
