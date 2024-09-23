@@ -37,7 +37,7 @@ pub trait IStarkloop<TContractState> {
     fn get_subscriptions(self: @TContractState, user: ContractAddress) -> Array<Subscription>;
     fn get_subscription_ids(self: @TContractState, user: ContractAddress) -> Array<u256>;
     fn remove_subscription(ref self: TContractState, subscription_id: u256) -> u256;
-    fn approve(self: @TContractState, erc20_contract: ContractAddress, amount: u256);
+    fn approve(ref self: TContractState, erc20_contract: ContractAddress, amount: u256);
     fn make_schedule_payment(ref self: TContractState, subscription_id: u256);
     fn update_subscription(
         ref self: TContractState, subscription_id: u256, subscription: Subscription
@@ -211,7 +211,7 @@ pub mod Starkloop {
             self.subscriptions.entry(subscription_id).read()
         }
 
-        fn approve(self: @ContractState, erc20_contract: ContractAddress, amount: u256) {
+        fn approve(ref self: ContractState, erc20_contract: ContractAddress, amount: u256) {
             IERC20Dispatcher { contract_address: erc20_contract }
                 .approve(get_contract_address(), amount);
         }
