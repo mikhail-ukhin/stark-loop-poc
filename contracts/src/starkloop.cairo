@@ -231,6 +231,9 @@ pub mod Starkloop {
             );
 
             let erc20 = IERC20Dispatcher { contract_address: subscription.token_address };
+            
+            assert(erc20.balance_of(subscription.user) >= subscription.amount, 'Insufficient funds');
+
             let success = erc20
                 .transfer_from(subscription.user, subscription.recipient, subscription.amount);
 
