@@ -6,7 +6,7 @@ import { convertToHexString } from '@/lib/utils';
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
-    const contract_address = '0x4187f2497247c92bb8d9b960f0fecb704d173525c3012316e0095a3454acde5';
+    const contract_address = '0x1e22f358d9449be5a45cfc423aa5a99627019eccec2607eb7a1c3eb4caf00f5';
     const typedABI = STRK_LOOP_ABI as Abi;
 
     const { contract } = useContract({ abi: typedABI, address: contract_address });
@@ -16,7 +16,7 @@ const SubscriptionForm: FC = () => {
         user: '',
         recipient: '',
         amount: { low: 0, high: 0 },
-        token_address: '0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766',
+        token_address: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d',
         periodicity: 0,
         expires_on: 0,
         last_payment: 0,
@@ -69,12 +69,12 @@ const SubscriptionForm: FC = () => {
         return [contract.populate("approve", [token_address, amount.low * 5])];
     }, [contract, address, subscription]);
 
-    const { send: writeApprovalAsync, data: writeApprovalData, isPending: writeApprovalIsPending } = useSendTransaction({ calls: callsApproval });
+    const { sendAsync: writeApprovalAsync, data: writeApprovalData, isPending: writeApprovalIsPending } = useSendTransaction({ calls: callsApproval });
 
     const { status: waitApprovalStatus, isLoading: waitApprovalIsLoading, isError: waitApprovalIsError } = useTransactionReceipt({ hash: writeApprovalData?.transaction_hash, watch: true });
 
     // Send transaction
-    const { send: writeAsync, data: writeData, isPending: writeIsPending } = useSendTransaction({ calls });
+    const { sendAsync: writeAsync, data: writeData, isPending: writeIsPending } = useSendTransaction({ calls });
 
     // Transaction receipt
     const { status: waitStatus, isLoading: waitIsLoading, isError: waitIsError } = useTransactionReceipt({ hash: writeData?.transaction_hash, watch: true });
@@ -83,8 +83,8 @@ const SubscriptionForm: FC = () => {
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        writeApprovalAsync();
-        // writeAsync();
+        await writeApprovalAsync();
+        await writeAsync();
     };
 
     // Render status messages based on transaction state

@@ -168,7 +168,7 @@ export const STRK_LOOP_ABI = [
           }
         ],
         "outputs": [],
-        "state_mutability": "view"
+        "state_mutability": "external"
       },
       {
         "type": "function",
