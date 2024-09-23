@@ -2,7 +2,6 @@ import { FC, useMemo, useState, useEffect } from 'react';
 import { useAccount, useContract, useSendTransaction, useTransactionReceipt } from '@starknet-react/core';
 import { STRK_LOOP_ABI } from "../abis/strk-loop-abi";
 import { type Abi } from "starknet";
-import { convertToHexString } from '@/lib/utils';
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();

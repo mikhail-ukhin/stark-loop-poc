@@ -1,11 +1,12 @@
-import { Contract, Account, json, RpcProvider, constants } from "starknet";
+import { Contract, Account, json, RpcProvider, constants, hash, num, events, CallData, ParsedEvent } from "starknet";
 import fs from "fs";
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
 const CONTRACT_PATH = "./artifacts/abi.json";
-const CHECK_INTERVAL_MS = 30 * 1000; // 30 seconds
+const CALL_DUE_PAYMENTS_INTERVAL_MS = 30 * 2 * 1000; // 60 seconds
+const CHECK_EVENTS_INTERVAL_MS = 30 * 1000; // 30 seconds
 
 let serviceAccount: Account;
 let loopContract: Contract;
@@ -73,6 +74,48 @@ async function checkDuePayments() {
     }
 }
 
+async function handleDuePaymentEvents() {
+    const lastBlock = await myProvider.getBlock('latest');
+    const keyFilter = [[num.toHex(hash.starknetKeccak('DuePayment')), '0x8']];
+
+    const abiEvents = events.getAbiEvents(loopContract.abi);
+    const abiStructs = CallData.getAbiStruct(loopContract.abi);
+    const abiEnums = CallData.getAbiEnum(loopContract.abi);
+
+    let continuationToken: string | undefined = '0';
+    let result: ParsedEvent[] = [];
+
+    while (continuationToken) { 
+        
+        const eventsList = await myProvider.getEvents({
+            address: loopContract.address,
+            from_block: { block_number: lastBlock.block_number - 2 },
+            to_block: { block_number: lastBlock.block_number },
+            chunk_size: 5,
+            keys: keyFilter,
+            continuation_token: continuationToken === '0' ? undefined : continuationToken,
+          });
+
+        continuationToken = eventsList.continuation_token;
+
+        if (eventsList) {
+            const parsed = events.parseEvents(eventsList.events, abiEvents, abiStructs, abiEnums);
+
+            parsed.forEach(element => {
+                result.push(element)
+            });
+        }
+        
+    }
+    if (result) {
+        console.log('collected events', result.length);
+    }
+    else {
+        console.log('no events')
+    }
+    
+}
+
 // Main function to run the process and repeat it every N seconds
 async function main() {
     await connectAccount();   // Connect account
@@ -80,12 +123,18 @@ async function main() {
 
     // First immediate check
     await checkDuePayments();
+    await handleDuePaymentEvents();
+
+    setInterval(async () => {
+        console.log("Checking for due payment events...");
+        await handleDuePaymentEvents();
+    }, CHECK_EVENTS_INTERVAL_MS);
 
     // Set up a recurring check every 30 seconds
     setInterval(async () => {
         console.log("Checking for due payments...");
         await checkDuePayments();
-    }, CHECK_INTERVAL_MS);
+    }, CALL_DUE_PAYMENTS_INTERVAL_MS);
 }
 
 main()
