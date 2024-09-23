@@ -351,3 +351,90 @@ fn test_get_subscriptions() {
     assert(subscriptions_for_user1 == wanted_result_for_user1, 'wrong subscriptions for user1');
     assert(subscriptions_for_user2 == wanted_result_for_user2, 'wrong subscriptions for user1');
 }
+
+#[test]
+fn test_make_schedule_payment() {
+    // First deploy a new contract
+    let contract_address = deploy_contract();
+
+    let dispatcher = IStarkloopDispatcher { contract_address };
+
+    // Create 3 users
+    let user1 = contract_address_const::<'user1'>();
+    let user2 = contract_address_const::<'user2'>();
+
+    let eth_token_address = contract_address_const::<
+        0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
+    >();
+
+    //Starts a subscription on September 21 at 9 a.m.
+    start_cheat_block_timestamp(contract_address, 1726909200);
+    let current_block_timestamp = get_block_timestamp();
+
+    // This values will be defined by user in the front-end.
+    let amount = 5 * GWEI;
+    let payment_count = 15_u64;
+    let periodicity = 4 * WEEK;
+    // Computed in the front-end
+    let expires_on = current_block_timestamp + payment_count * periodicity;
+
+    // Define a subscription
+    let subscription = SubscriptionTrait::new(
+        user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
+    );
+
+    let id = dispatcher.create_subscription(subscription);
+
+    dispatcher.make_schedule_payment(id);
+
+// TBD : Must Deploy the ETH ERC20 contract to be able to test the transfert_from    
+// [FAIL] tests::test_contract::test_make_schedule_payment
+// Failure data:
+// Got an exception while executing a hint: Hint Error: Error at pc=0:9879:
+// Got an exception while executing a hint: Requested contract address ContractAddress(PatriciaKey(StarkFelt("0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"))) is not deployed.
+}
+
+#[test]
+fn test_update_subscription() {
+    // First deploy a new contract
+    let contract_address = deploy_contract();
+
+    let dispatcher = IStarkloopDispatcher { contract_address };
+
+    // Create 3 users
+    let user1 = contract_address_const::<'user1'>();
+    let user2 = contract_address_const::<'user2'>();
+
+    let eth_token_address = contract_address_const::<
+        0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
+    >();
+
+    //Starts a subscription on September 21 at 9 a.m.
+    start_cheat_block_timestamp(contract_address, 1726909200);
+    let current_block_timestamp = get_block_timestamp();
+
+    // This values will be defined by user in the front-end.
+    let amount = 5 * GWEI;
+    let payment_count = 15_u64;
+    let periodicity = 4 * WEEK;
+    // Computed in the front-end
+    let expires_on = current_block_timestamp + payment_count * periodicity;
+
+    // Define a subscription
+    let subscription = SubscriptionTrait::new(
+        user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
+    );
+
+    let mut subscription1 = Subscription { ..subscription };
+    subscription1.last_payment = current_block_timestamp + 1234;
+    let mut wanted_subscription = Subscription { ..subscription1 };
+
+    let id = dispatcher.create_subscription(subscription);
+
+    dispatcher.update_subscription(id, subscription1);
+
+    // Get subscription
+    let ret_subscription = dispatcher.get_subscription(id);
+
+    assert(ret_subscription == wanted_subscription, 'subscription not updated')
+}
