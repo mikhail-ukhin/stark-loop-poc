@@ -212,12 +212,14 @@ pub mod Starkloop {
         }
 
         fn approve(ref self: ContractState, erc20_contract: ContractAddress, amount: u256) {
+            let caller_address = get_caller_address();
+
             IERC20Dispatcher { contract_address: erc20_contract }
-                .approve(get_contract_address(), amount);
+                .approve(caller_address, amount);
         }
 
         fn make_schedule_payment(ref self: ContractState, subscription_id: u256) {
-            //TBD add onwer check here, only admin or owner can trigger
+            self.ownable.assert_only_owner();
 
             let mut subscription = self.subscriptions.entry(subscription_id).read();
 
@@ -233,6 +235,7 @@ pub mod Starkloop {
             let erc20 = IERC20Dispatcher { contract_address: subscription.token_address };
             
             assert(erc20.balance_of(subscription.user) >= subscription.amount, 'Insufficient funds');
+            assert(erc20.allowance(subscription.user, get_contract_address()) >= subscription.amount, 'Insufficient allowance');
 
             let success = erc20
                 .transfer_from(subscription.user, subscription.recipient, subscription.amount);

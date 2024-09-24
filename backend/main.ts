@@ -6,7 +6,7 @@ dotenv.config();
 
 const CONTRACT_PATH = "./artifacts/abi.json";
 const CALL_DUE_PAYMENTS_INTERVAL_MS = 60 * 1000; // 60 seconds
-const CHECK_EVENTS_INTERVAL_MS = 30 * 1000; // 30 seconds
+const CHECK_EVENTS_INTERVAL_MS = 15 * 1000; // 30 seconds
 
 let serviceAccount: Account;
 let loopContract: Contract;
@@ -110,10 +110,10 @@ async function main() {
     await connectAccount();
     await getContract();
 
-    await checkDuePayments();
+    // await checkDuePayments();
     await handleDuePaymentEvents();
 
-    setInterval(checkDuePayments, CALL_DUE_PAYMENTS_INTERVAL_MS);
+    // setInterval(checkDuePayments, CALL_DUE_PAYMENTS_INTERVAL_MS);
     setInterval(handleDuePaymentEvents, CHECK_EVENTS_INTERVAL_MS);
 }
 
