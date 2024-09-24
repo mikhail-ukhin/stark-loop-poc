@@ -47,7 +47,7 @@ pub trait IStarkloop<TContractState> {
 
 #[starknet::contract]
 pub mod Starkloop {
-    use starknet::{ContractAddress, get_contract_address, get_block_timestamp};
+    use starknet::{ContractAddress, get_contract_address, get_block_timestamp, get_caller_address };
     use starknet::storage::{
         MutableVecTrait, StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map,
         Vec
@@ -100,14 +100,10 @@ pub mod Starkloop {
         self.ownable.initializer(initial_owner);
     }
 
-    fn convert_u64_to_u256(value: u64) -> u256 {
-        u256 { low: value.into(), high: 0 }
-    }
-
     #[abi(embed_v0)]
     impl StarkloopImpl of super::IStarkloop<ContractState> {
 
-        fn  get_subscription_ids(self: @ContractState, user: ContractAddress) -> Array<u256> {
+        fn get_subscription_ids(self: @ContractState, user: ContractAddress) -> Array<u256> {
             let mut result: Array<u256> = ArrayTrait::new();
     
             let mut id_index = 1;
@@ -153,6 +149,8 @@ pub mod Starkloop {
             assert!(subscription_id >= 0, "Invalid subscription Id");
 
             let mut subscription = self.subscriptions.entry(subscription_id).read();
+
+            assert!(subscription.user == get_caller_address(), "Not allowed to remove subscription");
 
             let disabled_subscription = super::Subscription {
                 user: subscription.user,

@@ -6,7 +6,7 @@ use snforge_std::{
 use contracts::starkloop::{
     Subscription, SubscriptionTrait, IStarkloopDispatcher, IStarkloopDispatcherTrait
 };
-use starknet::{ContractAddress, contract_address_const, get_block_timestamp};
+use starknet::{ContractAddress, contract_address_const, get_block_timestamp, get_caller_address};
 use starknet::contract_address::ContractAddressZeroable;
 
 fn deploy_contract() -> ContractAddress {
@@ -249,7 +249,6 @@ fn test_subscription_ids() {
 fn test_remove_subscription() {
     // First deploy a new contract
     let contract_address = deploy_contract();
-
     let dispatcher = IStarkloopDispatcher { contract_address };
 
     let user1 = contract_address_const::<'user1'>();
@@ -274,7 +273,7 @@ fn test_remove_subscription() {
         user2, user1, amount, usdc_token_address, periodicity, expires_on, 0_u64, true
     );
 
-    // start_cheat_caller_address(contract_address, user1);
+    start_cheat_caller_address(contract_address, user2);
 
     let first_subscription_id = dispatcher.create_subscription(subscription);
 
