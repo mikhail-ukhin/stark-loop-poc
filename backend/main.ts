@@ -1,4 +1,4 @@
-import { Contract, Account, json, RpcProvider, constants, hash, num, events, CallData, ParsedEvent } from "starknet";
+import { Contract, Account, json, RpcProvider, constants, hash, num, events, CallData, ParsedEvent, Uint256, BigNumberish } from "starknet";
 import fs from "fs";
 import * as dotenv from "dotenv";
 
@@ -73,8 +73,12 @@ async function handleDuePaymentEvents() {
 
                 for (const event of parsedEvents) {
                     const id = event[paymentEventName].id;
-                    console.log(id);
-                    await sendPayment(id);
+
+                    const uint = id as Uint256;
+
+                    const id_u256 = splitToU256(id as bigint);
+                    // console.log(uint);
+                    await sendPayment(id_u256);
                 }
             }
         }
@@ -98,6 +102,20 @@ async function sendPayment(id: any) {
         console.error(`Error processing payment for subscription ${id}:`, error);
     }
 }
+
+// Helper function to split a bigint into u256 (low, high) format
+function splitToU256(value: bigint): { low: string; high: string } {
+    const mask = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"); // Mask to get lower 128 bits (u128)
+    
+    const low = value & mask; // Low part: lower 128 bits
+    const high = value >> 128n; // High part: upper 128 bits
+    
+    return {
+        low: low.toString(),   // Convert to string for calldata
+        high: high.toString()  // Convert to string for calldata
+    };
+}
+
 
 async function main() {
     await connectAccount();

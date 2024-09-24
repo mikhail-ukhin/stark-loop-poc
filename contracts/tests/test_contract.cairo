@@ -160,7 +160,7 @@ fn test_undefined_subscription() {
         false
     );
 
-    let undefined_subscription = dispatcher.get_subscription(8_u256);
+    let undefined_subscription = dispatcher.get_subscription(8_u64);
     assert(undefined_subscription == empty_subscription, 'transaction should not exist')
 }
 

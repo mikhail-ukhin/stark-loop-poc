@@ -32,15 +32,15 @@ impl SubscriptionImpl of SubscriptionTrait {
 
 #[starknet::interface]
 pub trait IStarkloop<TContractState> {
-    fn create_subscription(ref self: TContractState, subscription: Subscription) -> u256;
-    fn get_subscription(self: @TContractState, subscription_id: u256) -> Subscription;
+    fn create_subscription(ref self: TContractState, subscription: Subscription) -> u64;
+    fn get_subscription(self: @TContractState, subscription_id: u64) -> Subscription;
     fn get_subscriptions(self: @TContractState, user: ContractAddress) -> Array<Subscription>;
-    fn get_subscription_ids(self: @TContractState, user: ContractAddress) -> Array<u256>;
-    fn remove_subscription(ref self: TContractState, subscription_id: u256) -> u256;
+    fn get_subscription_ids(self: @TContractState, user: ContractAddress) -> Array<u64>;
+    fn remove_subscription(ref self: TContractState, subscription_id: u64) -> u64;
     fn approve(ref self: TContractState, erc20_contract: ContractAddress, amount: u256);
-    fn make_schedule_payment(ref self: TContractState, subscription_id: u256);
+    fn make_schedule_payment(ref self: TContractState, subscription_id: u64);
     fn update_subscription(
-        ref self: TContractState, subscription_id: u256, subscription: Subscription
+        ref self: TContractState, subscription_id: u64, subscription: Subscription
     );
     fn check_due_payments(ref self: TContractState);
 }
@@ -65,11 +65,11 @@ pub mod Starkloop {
     struct Storage {
         // FIXME : users maps is not used. It should be used to get the Subscription list for a user.
         users: Map::<
-            ContractAddress, Vec<u256>
+            ContractAddress, Vec<u64>
         >, // Map the address of each user to their subscription id list
         // Map the address of each user to their subscription id list
-        subscriptions: Map<u256, super::Subscription>, // Map subscription id to Subscription
-        next_subscription_id: u256,
+        subscriptions: Map<u64, super::Subscription>, // Map subscription id to Subscription
+        next_subscription_id: u64,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage
     }
@@ -85,13 +85,13 @@ pub mod Starkloop {
 
     #[derive(Drop, starknet::Event)]
     struct SubscriptionCreated {
-        id: u256, // id of the subscription
+        id: u64, // id of the subscription
         subscription: super::Subscription,
     }
 
     #[derive(Drop, starknet::Event)]
     struct DuePayment {
-        id: u256,
+        id: u64,
         time: u64
     }
 
@@ -107,8 +107,8 @@ pub mod Starkloop {
     #[abi(embed_v0)]
     impl StarkloopImpl of super::IStarkloop<ContractState> {
 
-        fn  get_subscription_ids(self: @ContractState, user: ContractAddress) -> Array<u256> {
-            let mut result: Array<u256> = ArrayTrait::new();
+        fn  get_subscription_ids(self: @ContractState, user: ContractAddress) -> Array<u64> {
+            let mut result: Array<u64> = ArrayTrait::new();
     
             let mut id_index = 1;
             let last_id_index = self.next_subscription_id.read();
@@ -129,7 +129,7 @@ pub mod Starkloop {
         fn get_subscriptions(
             self: @ContractState, user: ContractAddress
         ) -> Array<super::Subscription> {
-            let mut subscription_id = 0_u256;
+            let mut subscription_id = 0_u64;
             let mut arr = ArrayTrait::<super::Subscription>::new();
 
             loop {
@@ -143,13 +143,13 @@ pub mod Starkloop {
                     arr.append(subscription);
                 }
 
-                subscription_id += 1_u256;
+                subscription_id += 1_u64;
             };
 
             arr
         }
 
-        fn remove_subscription(ref self: ContractState, subscription_id: u256) -> u256 {
+        fn remove_subscription(ref self: ContractState, subscription_id: u64) -> u64 {
             assert!(subscription_id >= 0, "Invalid subscription Id");
 
             let mut subscription = self.subscriptions.entry(subscription_id).read();
@@ -170,7 +170,7 @@ pub mod Starkloop {
             subscription_id
         }
 
-        fn create_subscription(ref self: ContractState, subscription: super::Subscription) -> u256 {
+        fn create_subscription(ref self: ContractState, subscription: super::Subscription) -> u64 {
             // Increase the subscription id
             let next_subscription_id = self.next_subscription_id.read() + 1;
             self.next_subscription_id.write(next_subscription_id);
@@ -207,7 +207,7 @@ pub mod Starkloop {
             next_subscription_id
         }
 
-        fn get_subscription(self: @ContractState, subscription_id: u256) -> super::Subscription {
+        fn get_subscription(self: @ContractState, subscription_id: u64) -> super::Subscription {
             self.subscriptions.entry(subscription_id).read()
         }
 
@@ -216,7 +216,7 @@ pub mod Starkloop {
                 .approve(get_contract_address(), amount);
         }
 
-        fn make_schedule_payment(ref self: ContractState, subscription_id: u256) {
+        fn make_schedule_payment(ref self: ContractState, subscription_id: u64) {
             //TBD add onwer check here, only admin or owner can trigger
 
             let mut subscription = self.subscriptions.entry(subscription_id).read();
@@ -242,7 +242,7 @@ pub mod Starkloop {
         }
 
         fn update_subscription(
-            ref self: ContractState, subscription_id: u256, subscription: super::Subscription
+            ref self: ContractState, subscription_id: u64, subscription: super::Subscription
         ) {
             assert!(subscription_id >= 0, "Invalid subscription Id");
 
@@ -252,7 +252,7 @@ pub mod Starkloop {
         fn check_due_payments(ref self: ContractState) {
             let last_block_ts = get_block_timestamp();
 
-            let mut subscription_id = 0_u256;
+            let mut subscription_id = 0_u64;
 
             loop {
                 if subscription_id >= self.next_subscription_id.read() {
@@ -266,7 +266,7 @@ pub mod Starkloop {
                     self.emit(DuePayment { id: subscription_id, time: last_block_ts });
                 }
 
-                subscription_id += 1_u256;
+                subscription_id += 1_u64;
             }
         }
     }
