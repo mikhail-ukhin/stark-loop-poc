@@ -149,8 +149,10 @@ pub mod Starkloop {
             assert!(subscription_id >= 0, "Invalid subscription Id");
 
             let mut subscription = self.subscriptions.entry(subscription_id).read();
+            let owner = self.ownable.owner();
+            let caller = get_caller_address();
 
-            assert!(subscription.user == get_caller_address(), "Not allowed to remove subscription");
+            assert!(subscription.user == owner || subscription.user == caller, "Not allowed to remove subscription");
 
             let disabled_subscription = super::Subscription {
                 user: subscription.user,
