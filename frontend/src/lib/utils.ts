@@ -34,7 +34,6 @@ export const convertToHexString = (input: string | undefined): HexString => {
   export const mapTokenAddressToLabel = (tokenAddressBigInt: bigint) => {
     const tokenAddress = `0x${tokenAddressBigInt.toString(16)}`; 
     const token = tokenOptions.find((t) => t.value.toLowerCase() === tokenAddress.toLowerCase());
-    console.log(tokenAddress, '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d');
 
     return token ? token.label : tokenAddress;
   };
@@ -47,5 +46,20 @@ export const convertToHexString = (input: string | undefined): HexString => {
   export const convertBigIntToNumber = (bigIntValue: bigint) => {
     return Number(bigIntValue);
   };
+
+   // Convert a plain number or BigInt to u256 structure
+  export function numberToU256(num: number) {
+    const bigNum = BigInt(num); // Ensure we work with BigInt for large numbers
+    const MAX_UINT128 = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'); // Correct mask for 128-bit values
+    
+    const low = bigNum & MAX_UINT128; // Get the lower 128 bits
+    const high = bigNum >> BigInt(128); // Get the upper 128 bits
+    
+    return {
+        low: low.toString(),   // Convert low part to string if needed
+        high: high.toString(), // Convert high part to string if needed
+    };
+  }
+  
 
   

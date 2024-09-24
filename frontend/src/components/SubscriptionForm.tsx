@@ -2,6 +2,8 @@ import { FC, useMemo, useState, useEffect } from 'react';
 import { useAccount, useContract, useSendTransaction, useTransactionReceipt } from '@starknet-react/core';
 import { STRK_LOOP_ABI } from "../abis/strk-loop-abi";
 import { type Abi } from "starknet";
+import { toBigInt } from "web3-utils";
+import { numberToU256 } from '@/lib/utils';
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
@@ -14,7 +16,7 @@ const SubscriptionForm: FC = () => {
     const [subscription, setSubscription] = useState({
         user: '',
         recipient: '',
-        amount: { low: 0, high: 0 },
+        amount: 0,
         token_address: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d',
         periodicity: 0,
         expires_on: 0,
@@ -53,35 +55,29 @@ const SubscriptionForm: FC = () => {
     // Prepare contract calls only when all fields are valid
     const calls = useMemo(() => {
         const { recipient, amount, token_address, periodicity, user } = subscription;
-        if (!address || !contract || !recipient || !amount.low || !token_address || !periodicity || periodicity <= 0 || !user) {
+        if (!address || !contract || !recipient || !amount || !token_address || !periodicity || periodicity <= 0 || !user) {
             return [];
         }
         return [contract.populate("create_subscription", [subscription])];
     }, [contract, address, subscription]);
 
-    // Prepare contract calls only when all fields are valid
     const callsApproval = useMemo(() => {
         const { recipient, amount, token_address, periodicity, user } = subscription;
-        if (!address || !contract || !recipient || !amount.low || !token_address || !periodicity || periodicity <= 0 || !user) {
+        if (!address || !contract || !recipient || !amount || !token_address || !periodicity || periodicity <= 0 || !user) {
             return [];
         }
-        return [contract.populate("approve", [token_address, amount.low * 5])];
+        
+        return [contract.populate("approve", [token_address, numberToU256(amount)])];  // No need to multiply if input is direct
     }, [contract, address, subscription]);
 
     const { sendAsync: writeApprovalAsync, data: writeApprovalData, isPending: writeApprovalIsPending } = useSendTransaction({ calls: callsApproval });
-
     const { status: waitApprovalStatus, isLoading: waitApprovalIsLoading, isError: waitApprovalIsError } = useTransactionReceipt({ hash: writeApprovalData?.transaction_hash, watch: true });
 
-    // Send transaction
     const { sendAsync: writeAsync, data: writeData, isPending: writeIsPending } = useSendTransaction({ calls });
-
-    // Transaction receipt
     const { status: waitStatus, isLoading: waitIsLoading, isError: waitIsError } = useTransactionReceipt({ hash: writeData?.transaction_hash, watch: true });
 
-    // Form submission handler
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
         await writeApprovalAsync();
         await writeAsync();
     };
@@ -95,7 +91,6 @@ const SubscriptionForm: FC = () => {
         return "Send";
     };
 
-    // Loading spinner component
     const LoadingState = ({ message }: { message: string }) => (
         <div className="flex items-center space-x-2">
             <div className="animate-spin">
@@ -107,7 +102,6 @@ const SubscriptionForm: FC = () => {
         </div>
     );
 
-    // Render form inputs
     const renderInput = (id: string, label: string, value: any, onChange: any, type: string = "text") => (
         <>
             <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
@@ -127,11 +121,9 @@ const SubscriptionForm: FC = () => {
         <form onSubmit={handleSubmit} className="bg-gray-50 p-6 rounded-lg border border-gray-300 shadow-sm max-w-md mx-auto">
             <h3 className="text-xl font-medium text-gray-800 mb-4">Create Subscription</h3>
 
-            {/* Form Fields */}
             {renderInput("recipient", "Recipient", subscription.recipient, (e: any) => setSubscription({ ...subscription, recipient: e.target.value }))}
-            {renderInput("amount-low", "Amount (Low)", subscription.amount.low, (e: any) => setSubscription({ ...subscription, amount: { ...subscription.amount, low: parseInt(e.target.value, 10) || 0 } }), "number")}
+            {renderInput("amount", "Amount", subscription.amount, (e: any) => setSubscription({ ...subscription, amount: parseInt(e.target.value, 10) || 0 }), "number")}
 
-            {/* Token Selection */}
             <label htmlFor="token_address" className="block text-sm font-medium text-gray-700 mb-2 mt-4">Token</label>
             <select
                 id="token_address"
@@ -148,7 +140,6 @@ const SubscriptionForm: FC = () => {
 
             {renderInput("periodicity", "Periodicity (in seconds)", subscription.periodicity, (e: any) => setSubscription({ ...subscription, periodicity: parseInt(e.target.value, 10) || 0 }), "number")}
 
-            {/* Expires On Field */}
             <label htmlFor="expires_on" className="block text-sm font-medium text-gray-700 mb-2 mt-4">Expires On</label>
             <input
                 type="datetime-local"
@@ -157,7 +148,6 @@ const SubscriptionForm: FC = () => {
                 onChange={handleExpiresOnChange}
             />
 
-            {/* Submit Button */}
             <button
                 type="submit"
                 className="mt-4 w-full border border-gray-300 text-gray-800 font-medium py-2 px-4 bg-yellow-300 rounded-md hover:bg-yellow-400 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
@@ -166,7 +156,6 @@ const SubscriptionForm: FC = () => {
                 {renderButtonContent()}
             </button>
 
-            {/* Transaction Link */}
             {writeData?.transaction_hash && (
                 <a
                     href={`https://sepolia.voyager.online/tx/${writeData?.transaction_hash}`}
