@@ -26,7 +26,7 @@ async function connectAccount() {
 
 async function getContract() {
     const abi = json.parse(fs.readFileSync(CONTRACT_PATH, "ascii"));
-    loopContract = new Contract(abi, process.env.CONTRACT, myProvider);
+    loopContract = new Contract(abi, process.env.CONTRACT || "", myProvider);
     loopContract.connect(serviceAccount);
 }
 
@@ -92,11 +92,11 @@ function toUint256(value: bigint) {
 
 async function sendPayment(id: any) {
     try {
-        // const { suggestedMaxFee: estimatedFee } = await serviceAccount.estimateInvokeFee({
-        //     contractAddress: loopContract.address,
-        //     entrypoint: "make_schedule_payment",
-        //     calldata: [toUint256(id)],
-        // });
+        const { suggestedMaxFee: estimatedFee } = await serviceAccount.estimateInvokeFee({
+            contractAddress: loopContract.address,
+            entrypoint: "make_schedule_payment",
+            calldata: [cairo.uint256(BigInt(id))],
+        });
 
         const v = BigInt(id);
 
@@ -104,7 +104,7 @@ async function sendPayment(id: any) {
         await myProvider.waitForTransaction(result.transaction_hash);
         console.log(`✅ Payment for subscription ${id} completed. Transaction hash: ${result.transaction_hash}`);
     } catch (error) {
-        console.error(`Error processing payment for subscription ${id}:`);
+        console.error(`Error ${error} processing payment for subscription ${id}:`);
     }
 }
 
