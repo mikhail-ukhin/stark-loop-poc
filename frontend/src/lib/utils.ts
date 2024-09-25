@@ -1,3 +1,5 @@
+import { useContract } from "@starknet-react/core";
+import { Abi } from "starknet";
 
 type HexString = `0x${string}`;
 
@@ -59,6 +61,12 @@ export const convertToHexString = (input: string | undefined): HexString => {
         low: low.toString(),   // Convert low part to string if needed
         high: high.toString(), // Convert high part to string if needed
     };
+  }
+
+  export function get_contract_by_address(addr: any, abiType: Abi) {
+    const { contract } = useContract({ abi : abiType, address: addr})
+
+    return contract;
   }
   
 

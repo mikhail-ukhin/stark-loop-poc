@@ -1,16 +1,22 @@
 import { FC, useMemo, useState, useEffect } from 'react';
 import { useAccount, useContract, useSendTransaction, useTransactionReceipt } from '@starknet-react/core';
 import { STRK_LOOP_ABI } from "../abis/strk-loop-abi";
-import { type Abi } from "starknet";
+import { STRK_ABI } from "../abis/strk-abi";
+import { cairo, type Abi } from "starknet";
 import { toBigInt } from "web3-utils";
-import { numberToU256 } from '@/lib/utils';
+import { get_contract_by_address, numberToU256 } from '@/lib/utils';
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
-    const contract_address = '0x426b4f1deda41b5baf031cc045c83bab82fc03bb0e2d800960ce9e73ba8b262';
+    const contract_address = '0x6214cd52302c972c6569b71b77b109f926b78c0cb914439f0d5770db8871dc7';
+    const erc20_strk_contract_address = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d';
     const typedABI = STRK_LOOP_ABI as Abi;
+    const erc20ABI = STRK_ABI as Abi;
 
     const { contract } = useContract({ abi: typedABI, address: contract_address });
+    // const { contract } = useContract({ abi : erc20ABI, address: erc20_strk_contract_address})
+
+    const erc20 = get_contract_by_address(erc20_strk_contract_address, erc20ABI);
 
     // Subscription state initialization
     const [subscription, setSubscription] = useState({
@@ -63,12 +69,12 @@ const SubscriptionForm: FC = () => {
 
     const callsApproval = useMemo(() => {
         const { recipient, amount, token_address, periodicity, user } = subscription;
-        if (!address || !contract || !recipient || !amount || !token_address || !periodicity || periodicity <= 0 || !user) {
+        if (!address || !erc20 || !recipient || !amount || !token_address || !periodicity || periodicity <= 0 || !user) {
             return [];
         }
         
-        return [contract.populate("approve", [token_address, numberToU256(amount)])];  // No need to multiply if input is direct
-    }, [contract, address, subscription]);
+        return [erc20.populate("approve", [token_address, cairo.uint256(BigInt(amount))])];  // No need to multiply if input is direct
+    }, [erc20, address, subscription]);
 
     const { sendAsync: writeApprovalAsync, data: writeApprovalData, isPending: writeApprovalIsPending } = useSendTransaction({ calls: callsApproval });
     const { status: waitApprovalStatus, isLoading: waitApprovalIsLoading, isError: waitApprovalIsError } = useTransactionReceipt({ hash: writeApprovalData?.transaction_hash, watch: true });

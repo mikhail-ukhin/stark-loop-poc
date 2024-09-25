@@ -1,4 +1,4 @@
-import { Contract, Account, json, RpcProvider, constants, hash, num, events, CallData, ParsedEvent } from "starknet";
+import { Contract, Account, json, RpcProvider, constants, hash, num, events, CallData, ParsedEvent, cairo } from "starknet";
 import fs from "fs";
 import * as dotenv from "dotenv";
 
@@ -42,7 +42,7 @@ async function checkDuePayments() {
         await myProvider.waitForTransaction(result.transaction_hash);
         console.log(`✅ Payment check transaction hash: ${result.transaction_hash}`);
     } catch (error) {
-        console.error('Error in checkDuePayments:', error);
+        console.error('Error in checkDuePayments:');
     }
 }
 
@@ -79,7 +79,7 @@ async function handleDuePaymentEvents() {
             }
         }
     } catch (error) {
-        console.error('Error in handleDuePaymentEvents:', error);
+        console.error('Error in handleDuePaymentEvents:');
     }
 }
 
@@ -92,17 +92,19 @@ function toUint256(value: bigint) {
 
 async function sendPayment(id: any) {
     try {
-        const { suggestedMaxFee: estimatedFee } = await serviceAccount.estimateInvokeFee({
-            contractAddress: loopContract.address,
-            entrypoint: "make_schedule_payment",
-            calldata: [toUint256(id)],
-        });
+        // const { suggestedMaxFee: estimatedFee } = await serviceAccount.estimateInvokeFee({
+        //     contractAddress: loopContract.address,
+        //     entrypoint: "make_schedule_payment",
+        //     calldata: [toUint256(id)],
+        // });
 
-        const result = await loopContract.invoke("make_schedule_payment", [id], { maxFee: estimatedFee });
+        const v = BigInt(id);
+
+        const result = await loopContract.invoke("make_schedule_payment", [cairo.uint256(v)]);
         await myProvider.waitForTransaction(result.transaction_hash);
         console.log(`✅ Payment for subscription ${id} completed. Transaction hash: ${result.transaction_hash}`);
     } catch (error) {
-        console.error(`Error processing payment for subscription ${id}:`, error);
+        console.error(`Error processing payment for subscription ${id}:`);
     }
 }
 
@@ -120,10 +122,14 @@ async function main() {
 main()
     .then(() => console.log('Monitoring started...'))
     .catch((error) => {
-        console.error('Error in main execution:', error);
+        // console.error('Error in main execution:', error);
         process.exit(1);
     });
 
 
 
+
+function BigNumberish() {
+    throw new Error("Function not implemented.");
+}
     

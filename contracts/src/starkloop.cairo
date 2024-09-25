@@ -212,10 +212,10 @@ pub mod Starkloop {
         }
 
         fn approve(ref self: ContractState, erc20_contract: ContractAddress, amount: u256) {
-            let caller_address = get_caller_address();
-
+            let contractAddress = get_contract_address();
+            
             IERC20Dispatcher { contract_address: erc20_contract }
-                .approve(caller_address, amount);
+                .approve(contractAddress, amount);
         }
 
         fn make_schedule_payment(ref self: ContractState, subscription_id: u256) {
