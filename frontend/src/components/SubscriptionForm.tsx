@@ -73,7 +73,7 @@ const SubscriptionForm: FC = () => {
             return [];
         }
         
-        return [erc20.populate("approve", [token_address, cairo.uint256(BigInt(amount))])];  // No need to multiply if input is direct
+        return [erc20.populate("approve", [contract_address, cairo.uint256(BigInt(amount))])];  // No need to multiply if input is direct
     }, [erc20, address, subscription]);
 
     const { sendAsync: writeApprovalAsync, data: writeApprovalData, isPending: writeApprovalIsPending } = useSendTransaction({ calls: callsApproval });
