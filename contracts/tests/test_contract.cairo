@@ -11,8 +11,19 @@ use starknet::contract_address::ContractAddressZeroable;
 
 
 fn OWNER() -> ContractAddress {
-    let owner: ContractAddress = contract_address_const::<'owner'>();
-    owner
+    contract_address_const::<'owner'>()
+}
+
+fn USER1() -> ContractAddress {
+    contract_address_const::<'user1'>()
+}
+
+fn USER2() -> ContractAddress {
+    contract_address_const::<'user2'>()
+}
+
+fn USER3() -> ContractAddress {
+    contract_address_const::<'user3'>()
 }
 
 fn deploy_contract() -> ContractAddress {
@@ -36,12 +47,12 @@ fn test_create_subscription() {
 
     let dispatcher = IStarkloopDispatcher { contract_address };
 
-    let user1 = contract_address_const::<'user1'>();
-    let user2 = contract_address_const::<'user2'>();
+    let user1 = USER1();
+    let user2 = USER2();
     // println!("user1 = {:?}", user2);
     // println!("user1 = {:?}", user2);
 
-    // Check if users are different. I miss a print function :-( (that for sure exits)
+    // Check if users are different.
     assert(user1 != user2, 'user1 != user2 fails');
 
     let eth_token_address = contract_address_const::<
@@ -77,6 +88,7 @@ fn test_create_subscription() {
     let subscription = SubscriptionTrait::new(
         0_u256, user1, user2, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
+    start_cheat_caller_address(contract_address, OWNER());
     assert(dispatcher.create_subscription(subscription) == 1, 'First Id must be 1');
 
     // This values will be defined by user in the front-end.
@@ -89,6 +101,8 @@ fn test_create_subscription() {
     let subscription = SubscriptionTrait::new(
         0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
+
+    start_cheat_caller_address(contract_address, OWNER());
     assert(dispatcher.create_subscription(subscription) == 2, 'Second Id must be 2');
 }
 
@@ -99,9 +113,9 @@ fn test_get_subscription() {
 
     let dispatcher = IStarkloopDispatcher { contract_address };
 
-    // Create 3 users
-    let user1 = contract_address_const::<'user1'>();
-    let user2 = contract_address_const::<'user2'>();
+    // Create 2 users
+    let user1 = USER1();
+    let user2 = USER2();
 
     let eth_token_address = contract_address_const::<
         0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
@@ -128,7 +142,7 @@ fn test_get_subscription() {
 
     let new_subscription = Subscription { ..subscription };
     // Create subscription
-    // start_cheat_caller_address(contract_address, user1);
+    start_cheat_caller_address(contract_address, OWNER());
     let first_subscription_id = dispatcher.create_subscription(subscription);
     // println!("first_subscription_id = {}", first_subscription_id);
 
@@ -145,10 +159,9 @@ fn test_get_subscription() {
     assert(ret_subscription.expires_on == new_subscription.expires_on, 'Wrong expires_ons');
     assert(ret_subscription.last_payment == new_subscription.last_payment, 'Wrong last_payment');
     assert(ret_subscription.is_active == new_subscription.is_active, 'Wrong is_active');
-
     // Note to myself : To be able to compare struct, it must have #[derive(PartialEq)]
-    // assert(ret_subscription == new_subscription, 'Wrong subscription');
-    // comment this since original subscription has id 0
+// assert(ret_subscription == new_subscription, 'Wrong subscription');
+// comment this since original subscription has id 0
 }
 
 #[test]
@@ -168,6 +181,7 @@ fn test_undefined_subscription() {
         false
     );
 
+    start_cheat_caller_address(contract_address, OWNER());
     let undefined_subscription = dispatcher.get_subscription(8_u256);
     assert(undefined_subscription == empty_subscription, 'transaction should not exist')
 }
@@ -178,8 +192,8 @@ fn test_remove_subscription() {
     let contract_address = deploy_contract();
     let dispatcher = IStarkloopDispatcher { contract_address };
 
-    let user1 = contract_address_const::<'user1'>();
-    let user2 = contract_address_const::<'user2'>();
+    let user1 = USER1();
+    let user2 = USER2();
 
     let usdc_token_address = contract_address_const::<
         0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8
@@ -200,10 +214,10 @@ fn test_remove_subscription() {
         0_u256, user2, user1, amount, usdc_token_address, periodicity, expires_on, 0_u64, true
     );
 
-    start_cheat_caller_address(contract_address, user2);
-
+    start_cheat_caller_address(contract_address, OWNER());
     let first_subscription_id = dispatcher.create_subscription(subscription);
 
+    start_cheat_caller_address(contract_address, OWNER());
     let _ = dispatcher.remove_subscription(first_subscription_id);
 
     let removed_subscription = dispatcher.get_subscription(first_subscription_id);
@@ -215,6 +229,50 @@ fn test_remove_subscription() {
 }
 
 #[test]
+fn test_user_can_remove_subscription() {
+    // First deploy a new contract
+    let contract_address = deploy_contract();
+    let dispatcher = IStarkloopDispatcher { contract_address };
+
+    let user1 = USER1();
+    let user2 = USER2();
+
+    let usdc_token_address = contract_address_const::<
+        0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8
+    >();
+
+    //Starts a subscription on September 21 at 9 a.m.
+    start_cheat_block_timestamp(contract_address, 1726909200);
+    let current_block_timestamp = get_block_timestamp();
+    // This values will be defined by user in the front-end.
+    let amount = 5 * GWEI;
+    let payment_count = 15_u64;
+    let periodicity = 5 * DAY;
+    // Computed in the front-end
+    let expires_on = current_block_timestamp + payment_count * periodicity;
+
+    // Define a subscription
+    let mut subscription = SubscriptionTrait::new(
+        0_u256, user1, user2, amount, usdc_token_address, periodicity, expires_on, 0_u64, true
+    );
+
+    start_cheat_caller_address(contract_address, OWNER());
+    let first_subscription_id = dispatcher.create_subscription(subscription);
+
+    start_cheat_caller_address(contract_address, user1);
+    let _ = dispatcher.remove_subscription(first_subscription_id);
+
+    start_cheat_caller_address(contract_address, OWNER());
+    let removed_subscription = dispatcher.get_subscription(first_subscription_id);
+
+    assert(removed_subscription.is_active == false, 'it is still active');
+    assert(removed_subscription.amount == 0_u256, 'Wrong amount');
+    assert(removed_subscription.periodicity == 0_u64, 'Wrong periodicity');
+    assert(removed_subscription.last_payment == 0_u64, 'Wrong last_payment');
+}
+
+
+#[test]
 fn test_get_subscriptions() {
     // First deploy a new contract
     let contract_address = deploy_contract();
@@ -222,8 +280,9 @@ fn test_get_subscriptions() {
     let dispatcher = IStarkloopDispatcher { contract_address };
 
     // Create 3 users
-    let user1 = contract_address_const::<'user1'>();
-    let user2 = contract_address_const::<'user2'>();
+    let user1 = USER1();
+    let user2 = USER2();
+    let user3 = USER3();
 
     let eth_token_address = contract_address_const::<
         0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
@@ -242,7 +301,7 @@ fn test_get_subscriptions() {
 
     // Define a subscription
     let subscription = SubscriptionTrait::new(
-        0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
+        0_u256, user2, user3, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
 
     let mut subscription1 = Subscription { ..subscription };
@@ -270,6 +329,7 @@ fn test_get_subscriptions() {
 
     // start_cheat_caller_address(contract_address, user1);
     // Create subscription
+    start_cheat_caller_address(contract_address, OWNER());
     let _s1 = dispatcher.create_subscription(subscription1);
     let _s2 = dispatcher.create_subscription(subscription2);
     let _s3 = dispatcher.create_subscription(subscription3);
@@ -295,8 +355,8 @@ fn test_make_schedule_payment() {
     let dispatcher = IStarkloopDispatcher { contract_address };
 
     // Create 3 users
-    let user1 = contract_address_const::<'user1'>();
-    let user2 = contract_address_const::<'user2'>();
+    let user1 = USER1();
+    let user2 = USER2();
 
     let eth_token_address = contract_address_const::<
         0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
@@ -324,12 +384,13 @@ fn test_make_schedule_payment() {
     let id = dispatcher.create_subscription(subscription);
 
     dispatcher.make_schedule_payment(id);
-
-// TBD : Must Deploy the ETH ERC20 contract to be able to test the transfert_from    
+    // TBD : Must Deploy the ETH ERC20 contract to be able to test the transfert_from
 // [FAIL] tests::test_contract::test_make_schedule_payment
 // Failure data:
 // Got an exception while executing a hint: Hint Error: Error at pc=0:9879:
-// Got an exception while executing a hint: Requested contract address ContractAddress(PatriciaKey(StarkFelt("0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"))) is not deployed.
+// Got an exception while executing a hint: Requested contract address
+// ContractAddress(PatriciaKey(StarkFelt("0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7")))
+// is not deployed.
 }
 
 #[test]
@@ -339,9 +400,9 @@ fn test_update_subscription() {
 
     let dispatcher = IStarkloopDispatcher { contract_address };
 
-    // Create 3 users
-    let user1 = contract_address_const::<'user1'>();
-    let user2 = contract_address_const::<'user2'>();
+    // Create 2 users
+    let user1 = USER1();
+    let user2 = USER2();
 
     let eth_token_address = contract_address_const::<
         0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
@@ -367,6 +428,7 @@ fn test_update_subscription() {
     subscription1.last_payment = current_block_timestamp + 1234;
     let mut wanted_subscription = Subscription { ..subscription1 };
 
+    start_cheat_caller_address(contract_address, OWNER());
     let id = dispatcher.create_subscription(subscription);
 
     dispatcher.update_subscription(id, subscription1);
