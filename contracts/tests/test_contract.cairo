@@ -69,7 +69,7 @@ fn test_create_subscription() {
     let expires_on = current_block_timestamp + payment_count * periodicity;
 
     let subscription = SubscriptionTrait::new(
-        user1, user2, amount, eth_token_address, periodicity, expires_on, 0_u64, true
+        0_u256, user1, user2, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
     assert(dispatcher.create_subscription(subscription) == 1, 'First Id must be 1');
 
@@ -81,7 +81,7 @@ fn test_create_subscription() {
     let expires_on = current_block_timestamp + payment_count * periodicity;
 
     let subscription = SubscriptionTrait::new(
-        user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
+        0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
     assert(dispatcher.create_subscription(subscription) == 2, 'Second Id must be 2');
 }
@@ -114,7 +114,7 @@ fn test_get_subscription() {
 
     // Define a subscription
     let subscription = SubscriptionTrait::new(
-        user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
+        0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
 
     // Note to myself : To be able to print a struct, it must have #[derive(Debug)]
@@ -150,6 +150,7 @@ fn test_undefined_subscription() {
     let dispatcher = IStarkloopDispatcher { contract_address };
 
     let empty_subscription = SubscriptionTrait::new(
+        0_u256,
         ContractAddressZeroable::zero(),
         ContractAddressZeroable::zero(),
         0_u256,
@@ -192,7 +193,7 @@ fn test_subscription_ids() {
 
     // Define a subscription
     let subscription = SubscriptionTrait::new(
-        user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
+        0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
 
     // Note to myself : To be able to print a struct, it must have #[derive(Debug)]
@@ -270,7 +271,7 @@ fn test_remove_subscription() {
 
     // Define a subscription
     let subscription = SubscriptionTrait::new(
-        user2, user1, amount, usdc_token_address, periodicity, expires_on, 0_u64, true
+        0_u256, user2, user1, amount, usdc_token_address, periodicity, expires_on, 0_u64, true
     );
 
     start_cheat_caller_address(contract_address, user2);
@@ -315,7 +316,7 @@ fn test_get_subscriptions() {
 
     // Define a subscription
     let subscription = SubscriptionTrait::new(
-        user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
+        0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
 
     let mut subscription1 = Subscription { ..subscription };
@@ -368,6 +369,8 @@ fn test_make_schedule_payment() {
 
     //Starts a subscription on September 21 at 9 a.m.
     start_cheat_block_timestamp(contract_address, 1726909200);
+    start_cheat_caller_address(contract_address, user2);
+
     let current_block_timestamp = get_block_timestamp();
 
     // This values will be defined by user in the front-end.
@@ -379,7 +382,7 @@ fn test_make_schedule_payment() {
 
     // Define a subscription
     let subscription = SubscriptionTrait::new(
-        user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
+        0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
 
     let id = dispatcher.create_subscription(subscription);
@@ -421,7 +424,7 @@ fn test_update_subscription() {
 
     // Define a subscription
     let subscription = SubscriptionTrait::new(
-        user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
+        0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
 
     let mut subscription1 = Subscription { ..subscription };

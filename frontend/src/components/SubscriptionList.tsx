@@ -4,7 +4,7 @@ import { convertToHexString, formatRecipient, convertBigIntToNumber, mapTokenAdd
 
 const SubscriptionList: React.FC = () => {
   const { address } = useAccount();
-  const contract_address = '0x104982df34a84fea6a2737456255e61c993781ec8f23f2a10878b496ac96186';
+  const contract_address = '0xdd07c6e44619c6da9df158d6e3ce4fb2ee37e42295fc6e5b6609e1f81bdd20';
   const typedABI = STRK_LOOP_ABI as Abi;
 
   const {

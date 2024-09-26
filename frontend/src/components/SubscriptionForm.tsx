@@ -8,7 +8,7 @@ import { get_contract_by_address, numberToU256 } from '@/lib/utils';
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
-    const contract_address = '0x104982df34a84fea6a2737456255e61c993781ec8f23f2a10878b496ac96186';
+    const contract_address = '0xdd07c6e44619c6da9df158d6e3ce4fb2ee37e42295fc6e5b6609e1f81bdd20';
     const erc20_strk_contract_address = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d';
     const typedABI = STRK_LOOP_ABI as Abi;
     const erc20ABI = STRK_ABI as Abi;
@@ -69,14 +69,15 @@ const SubscriptionForm: FC = () => {
 
     const callsApproval = useMemo(() => {
         const { recipient, amount, token_address, periodicity, user, expires_on} = subscription;
-        if (!address || !erc20 || !recipient || !amount || !token_address || !periodicity || periodicity <= 0 || !user) {
+        if (!address || !erc20 || !recipient || !expires_on || !amount || !token_address || !periodicity || periodicity <= 0 || !user) {
             return [];
         }
-
+        const MULTIPLIER = 10000000000000000;
+        
         const currentTime = Math.floor(Date.now() / 1000);
         const totalAmount = Math.ceil(amount * (expires_on - currentTime) / periodicity);   // The total amount of token spend during subscription must be approved
 
-        return [erc20.populate("approve", [contract_address, cairo.uint256(BigInt(totalAmount))])];  // No need to multiply if input is direct
+        return [erc20.populate("approve", [contract_address, cairo.uint256(BigInt(totalAmount * MULTIPLIER))])];  // No need to multiply if input is direct
     }, [erc20, address, subscription]);
 
     const { sendAsync: writeApprovalAsync, data: writeApprovalData, isPending: writeApprovalIsPending } = useSendTransaction({ calls: callsApproval });

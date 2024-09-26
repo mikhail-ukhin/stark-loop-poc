@@ -10,6 +10,7 @@ use starknet::ContractAddress;
 // Structure to hold subscription details
 #[derive(Drop, Debug, PartialEq, Serde, starknet::Store)]
 pub struct Subscription {
+    id: u256,
     user: ContractAddress, // Address of the user that instanciate the Subscription
     recipient: ContractAddress, // Address of the recipient who will receive the token
     amount: u256, // Amount of tokens to be transfert to the recipient 
@@ -21,12 +22,21 @@ pub struct Subscription {
 }
 
 trait SubscriptionTrait {
-    fn new(user: ContractAddress, recipient: ContractAddress, amount: u256, token_address: ContractAddress, periodicity: u64, expires_on: u64, last_payment: u64, is_active: bool) -> Subscription;
+    fn new(id: u256, user: ContractAddress, recipient: ContractAddress, amount: u256, token_address: ContractAddress, periodicity: u64, expires_on: u64, last_payment: u64, is_active: bool) -> Subscription;
 }
 
 impl SubscriptionImpl of SubscriptionTrait {
-    fn new(user: ContractAddress, recipient: ContractAddress, amount: u256, token_address: ContractAddress, periodicity: u64, expires_on: u64, last_payment: u64, is_active: bool) -> Subscription {
-        Subscription { user, recipient, amount, token_address, periodicity, expires_on, last_payment, is_active }
+    fn new(
+        id: u256, 
+        user: ContractAddress, 
+        recipient: ContractAddress, 
+        amount: u256, 
+        token_address: ContractAddress, 
+        periodicity: u64, 
+        expires_on: u64, 
+        last_payment: u64, 
+        is_active: bool) -> Subscription {
+        Subscription { id, user, recipient, amount, token_address, periodicity, expires_on, last_payment, is_active }
     }
 }
 
@@ -155,6 +165,7 @@ pub mod Starkloop {
             assert!(subscription.user == owner || subscription.user == caller, "Not allowed to remove subscription");
 
             let disabled_subscription = super::Subscription {
+                id: subscription_id,
                 user: subscription.user,
                 recipient: subscription.recipient,
                 amount: 0,
@@ -178,6 +189,7 @@ pub mod Starkloop {
             // Create a copy of the subscription before writing it to storage
             // It's to avoid "Variable was previously moved."
             let subscription_copy = super::Subscription {
+                id: next_subscription_id,
                 user: subscription.user,
                 recipient: subscription.recipient,
                 amount: subscription.amount,
