@@ -3,8 +3,7 @@ import { useAccount, useContract, useSendTransaction, useTransactionReceipt } fr
 import { STRK_LOOP_ABI } from "../abis/strk-loop-abi";
 import { STRK_ABI } from "../abis/strk-abi";
 import { cairo, type Abi } from "starknet";
-import { toBigInt } from "web3-utils";
-import { get_contract_by_address, numberToU256 } from '@/lib/utils';
+import { get_contract_by_address, numberToU256, tokenOptions } from '@/lib/utils';
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
@@ -14,11 +13,8 @@ const SubscriptionForm: FC = () => {
     const erc20ABI = STRK_ABI as Abi;
 
     const { contract } = useContract({ abi: typedABI, address: contract_address });
-    // const { contract } = useContract({ abi : erc20ABI, address: erc20_strk_contract_address})
-
     const erc20 = get_contract_by_address(erc20_strk_contract_address, erc20ABI);
 
-    // Subscription state initialization
     const [subscription, setSubscription] = useState({
         id: cairo.uint256(0),
         user: '',
@@ -31,7 +27,6 @@ const SubscriptionForm: FC = () => {
         is_active: true,
     });
 
-    // Update subscription user field when address changes
     useEffect(() => {
         if (address) {
             setSubscription((prevSubscription) => ({
@@ -41,14 +36,6 @@ const SubscriptionForm: FC = () => {
         }
     }, [address]);
 
-    // Token options
-    const tokenOptions = [
-        { label: 'STRK', value: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d' },
-        { label: 'USDC', value: '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8' },
-        { label: 'DAI', value: '0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3' },
-    ];
-
-    // Handle change for the expires_on input
     const handleExpiresOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedDateTime = e.target.value;
         const utcSeconds = Math.floor(new Date(selectedDateTime).getTime() / 1000);
@@ -59,7 +46,6 @@ const SubscriptionForm: FC = () => {
         }));
     };
 
-    // Prepare contract calls only when all fields are valid
     const calls = useMemo(() => {
         const { recipient, amount, token_address, periodicity, user } = subscription;
         if (!address || !contract || !recipient || !amount || !token_address || !periodicity || periodicity <= 0 || !user) {
