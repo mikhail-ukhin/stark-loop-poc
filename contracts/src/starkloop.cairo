@@ -46,8 +46,10 @@ pub trait IStarkloop<TContractState> {
     fn get_subscription(self: @TContractState, subscription_id: u256) -> Subscription;
     fn get_subscriptions(self: @TContractState, user: ContractAddress) -> Array<Subscription>;
     fn get_subscription_ids(self: @TContractState, user: ContractAddress) -> Array<u256>;
+    fn get_all_subscription_ids(self: @TContractState) -> Array<u256>;
+    fn get_all_active_subscription_ids(self: @TContractState) -> Array<u256>;
+    fn get_all_subscription_that_must_be_payed_ids(self: @TContractState) -> Array<u256>;
     fn remove_subscription(ref self: TContractState, subscription_id: u256) -> u256;
-    fn approve(ref self: TContractState, erc20_contract: ContractAddress, amount: u256);
     fn make_schedule_payment(ref self: TContractState, subscription_id: u256);
     fn update_subscription(
         ref self: TContractState, subscription_id: u256, subscription: Subscription
@@ -113,6 +115,63 @@ pub mod Starkloop {
     #[abi(embed_v0)]
     impl StarkloopImpl of super::IStarkloop<ContractState> {
 
+        fn get_all_subscription_that_must_be_payed_ids(self: @ContractState) -> Array<u256> {
+            let mut result: Array<u256> = ArrayTrait::new();
+            let last_block_ts = get_block_timestamp();
+            
+            let mut id_index = 1;
+            let last_id_index = self.next_subscription_id.read();
+            loop {
+                if id_index > last_id_index {
+                    break;
+                }
+                let subscription = self.subscriptions.entry(id_index).read();
+
+                if subscription.is_active
+                    && last_block_ts >= (subscription.last_payment + subscription.periodicity) {
+                        result.append(id_index);
+                }
+                id_index = id_index + 1;
+            };
+            
+            result
+        }
+
+        fn get_all_active_subscription_ids(self: @ContractState) -> Array<u256> {
+            let mut result: Array<u256> = ArrayTrait::new();
+    
+            let mut id_index = 1;
+            let last_id_index = self.next_subscription_id.read();
+            loop {
+                if id_index > last_id_index {
+                    break;
+                }
+                let subscription = self.subscriptions.entry(id_index).read();
+                if (subscription.is_active) { 
+                    result.append(id_index);
+                }
+                id_index = id_index + 1;
+            };
+            
+            result
+        }
+        
+        fn get_all_subscription_ids(self: @ContractState) -> Array<u256> {
+            let mut result: Array<u256> = ArrayTrait::new();
+    
+            let mut id_index = 1;
+            let last_id_index = self.next_subscription_id.read();
+            loop {
+                if id_index > last_id_index {
+                    break;
+                }
+                result.append(id_index);
+                id_index = id_index + 1;
+            };
+            
+            result
+        }
+        
         fn get_subscription_ids(self: @ContractState, user: ContractAddress) -> Array<u256> {
             let mut result: Array<u256> = ArrayTrait::new();
     
@@ -221,13 +280,6 @@ pub mod Starkloop {
 
         fn get_subscription(self: @ContractState, subscription_id: u256) -> super::Subscription {
             self.subscriptions.entry(subscription_id).read()
-        }
-
-        fn approve(ref self: ContractState, erc20_contract: ContractAddress, amount: u256) {
-            let contractAddress = get_contract_address();
-            
-            IERC20Dispatcher { contract_address: erc20_contract }
-                .approve(contractAddress, amount);
         }
 
         fn make_schedule_payment(ref self: ContractState, subscription_id: u256) {
