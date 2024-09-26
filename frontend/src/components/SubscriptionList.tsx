@@ -23,7 +23,7 @@ const SubscriptionList: React.FC = () => {
     abi: typedABI,
     address: contract_address,
     watch: true,
-    refetchInterval: 15000
+    refetchInterval: 5000
   });
 
 
@@ -45,6 +45,7 @@ const SubscriptionList: React.FC = () => {
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Id</th>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Recipient</th>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Amount</th>
+                <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Periodicity</th>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Next Payment</th>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Expires On</th>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Actions</th>
@@ -60,10 +61,13 @@ const SubscriptionList: React.FC = () => {
                       {convertBigIntToNumber(subscription.amount)} {mapTokenAddressToLabel(subscription.token_address)}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
+                      {convertBigIntToNumber(subscription.periodicity)} second(s)
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2 text-gray-700">
                       {getNextPayment(subscription.last_payment, subscription.periodicity).toLocaleString()}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
-                      {new Date(Number(subscription.expires_on) * 1000).toLocaleDateString()}
+                      {new Date(Number(subscription.expires_on) * 1000).toLocaleString()}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
                       <CancelButton
