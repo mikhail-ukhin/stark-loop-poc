@@ -88,7 +88,7 @@ fn test_create_subscription() {
     let subscription = SubscriptionTrait::new(
         0_u256, user1, user2, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
-    start_cheat_caller_address(contract_address, OWNER());
+    start_cheat_caller_address(contract_address, subscription.user);
     assert(dispatcher.create_subscription(subscription) == 1, 'First Id must be 1');
 
     // This values will be defined by user in the front-end.
@@ -102,7 +102,7 @@ fn test_create_subscription() {
         0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
 
-    start_cheat_caller_address(contract_address, OWNER());
+    start_cheat_caller_address(contract_address, subscription.user);
     assert(dispatcher.create_subscription(subscription) == 2, 'Second Id must be 2');
 }
 
@@ -142,7 +142,7 @@ fn test_get_subscription() {
 
     let new_subscription = Subscription { ..subscription };
     // Create subscription
-    start_cheat_caller_address(contract_address, OWNER());
+    start_cheat_caller_address(contract_address, subscription.user);
     let first_subscription_id = dispatcher.create_subscription(subscription);
     // println!("first_subscription_id = {}", first_subscription_id);
 
@@ -214,7 +214,7 @@ fn test_remove_subscription() {
         0_u256, user2, user1, amount, usdc_token_address, periodicity, expires_on, 0_u64, true
     );
 
-    start_cheat_caller_address(contract_address, OWNER());
+    start_cheat_caller_address(contract_address, subscription.user);
     let first_subscription_id = dispatcher.create_subscription(subscription);
 
     start_cheat_caller_address(contract_address, OWNER());
@@ -256,7 +256,7 @@ fn test_user_can_remove_subscription() {
         0_u256, user1, user2, amount, usdc_token_address, periodicity, expires_on, 0_u64, true
     );
 
-    start_cheat_caller_address(contract_address, OWNER());
+    start_cheat_caller_address(contract_address, subscription.user);
     let first_subscription_id = dispatcher.create_subscription(subscription);
 
     start_cheat_caller_address(contract_address, user1);
@@ -329,10 +329,14 @@ fn test_get_subscriptions() {
 
     // start_cheat_caller_address(contract_address, user1);
     // Create subscription
-    start_cheat_caller_address(contract_address, OWNER());
+
+    start_cheat_caller_address(contract_address, subscription1.user);
     let _s1 = dispatcher.create_subscription(subscription1);
+    start_cheat_caller_address(contract_address, subscription2.user);
     let _s2 = dispatcher.create_subscription(subscription2);
+    start_cheat_caller_address(contract_address, subscription3.user);
     let _s3 = dispatcher.create_subscription(subscription3);
+    start_cheat_caller_address(contract_address, subscription4.user);
     let _s4 = dispatcher.create_subscription(subscription4);
 
     let subscriptions_for_user1 = dispatcher.get_subscriptions(user1);
@@ -380,7 +384,7 @@ fn test_make_schedule_payment() {
         0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
 
-    start_cheat_caller_address(contract_address, OWNER());
+    start_cheat_caller_address(contract_address, subscription.user);
     let id = dispatcher.create_subscription(subscription);
 
     dispatcher.make_schedule_payment(id);
@@ -428,7 +432,7 @@ fn test_update_subscription() {
     subscription1.last_payment = current_block_timestamp + 1234;
     let mut wanted_subscription = Subscription { ..subscription1 };
 
-    start_cheat_caller_address(contract_address, OWNER());
+    start_cheat_caller_address(contract_address, subscription.user);
     let id = dispatcher.create_subscription(subscription);
 
     dispatcher.update_subscription(id, subscription1);

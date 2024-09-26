@@ -253,7 +253,11 @@ pub mod Starkloop {
         }
 
         fn create_subscription(ref self: ContractState, subscription: super::Subscription) -> u256 {
-            self.ownable.assert_only_owner();
+            // self.ownable.assert_only_owner();
+
+            let caller = get_caller_address();
+
+            assert!(caller == subscription.user, "only user is allowed");
 
             assert!((subscription.user != subscription.recipient), "user and recipient are same");
 
