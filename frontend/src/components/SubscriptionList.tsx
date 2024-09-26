@@ -4,7 +4,7 @@ import { convertToHexString, formatRecipient, convertBigIntToNumber, mapTokenAdd
 
 const SubscriptionList: React.FC = () => {
   const { address } = useAccount();
-  const contract_address = '0x2c9f66769b4cc192b7ec87fd4e61ce93d54cf4948e7bbad52d30efa0c369b85';
+  const contract_address = '0x378fe3a3f8bc503f78e91dbbba42efab3e4ffc5ab140d8e316b0fe1f02c2391';
   const typedABI = STRK_LOOP_ABI as Abi;
 
   const {
@@ -52,7 +52,7 @@ const SubscriptionList: React.FC = () => {
                 readData.map((subscription: any, index: number) => (
                   <tr key={index} className="hover:bg-gray-100">
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
-                      {subscription.id}
+                    {convertBigIntToNumber(subscription.id)}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
                       {formatRecipient(subscription.recipient)}

@@ -8,7 +8,7 @@ import { get_contract_by_address, numberToU256 } from '@/lib/utils';
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
-    const contract_address = '0x2c9f66769b4cc192b7ec87fd4e61ce93d54cf4948e7bbad52d30efa0c369b85';
+    const contract_address = '0x378fe3a3f8bc503f78e91dbbba42efab3e4ffc5ab140d8e316b0fe1f02c2391';
     const erc20_strk_contract_address = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d';
     const typedABI = STRK_LOOP_ABI as Abi;
     const erc20ABI = STRK_ABI as Abi;

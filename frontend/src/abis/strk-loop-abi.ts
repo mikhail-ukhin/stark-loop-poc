@@ -144,6 +144,39 @@ export const STRK_LOOP_ABI = [
       },
       {
         "type": "function",
+        "name": "get_all_subscription_ids",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::integer::u256>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_all_active_subscription_ids",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::integer::u256>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_all_subscription_that_must_be_payed_ids",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::integer::u256>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
         "name": "remove_subscription",
         "inputs": [
           {
@@ -156,22 +189,6 @@ export const STRK_LOOP_ABI = [
             "type": "core::integer::u256"
           }
         ],
-        "state_mutability": "external"
-      },
-      {
-        "type": "function",
-        "name": "approve",
-        "inputs": [
-          {
-            "name": "erc20_contract",
-            "type": "core::starknet::contract_address::ContractAddress"
-          },
-          {
-            "name": "amount",
-            "type": "core::integer::u256"
-          }
-        ],
-        "outputs": [],
         "state_mutability": "external"
       },
       {
