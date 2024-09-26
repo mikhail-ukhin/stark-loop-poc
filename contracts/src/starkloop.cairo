@@ -198,10 +198,10 @@ pub mod Starkloop {
         fn get_subscriptions(
             self: @ContractState, user: ContractAddress
         ) -> Array<super::Subscription> {
-            let owner = self.ownable.owner();
-            let caller = get_caller_address();
+            // let owner = self.ownable.owner();
+            // let caller = get_caller_address();
 
-            assert!(caller == owner || caller == user, "only user or owner are allowed");
+            // assert!(caller == owner || caller == user, "only user or owner are allowed");
 
             let mut subscription_id = 1_u256;
             let mut arr = ArrayTrait::<super::Subscription>::new();
