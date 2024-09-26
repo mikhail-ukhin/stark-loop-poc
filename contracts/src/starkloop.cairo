@@ -45,7 +45,6 @@ pub trait IStarkloop<TContractState> {
     fn create_subscription(ref self: TContractState, subscription: Subscription) -> u256;
     fn get_subscription(self: @TContractState, subscription_id: u256) -> Subscription;
     fn get_subscriptions(self: @TContractState, user: ContractAddress) -> Array<Subscription>;
-    fn get_subscription_ids(self: @TContractState, user: ContractAddress) -> Array<u256>;
     fn get_all_subscription_ids(self: @TContractState) -> Array<u256>;
     fn get_all_active_subscription_ids(self: @TContractState) -> Array<u256>;
     fn get_all_subscription_that_must_be_payed_ids(self: @TContractState) -> Array<u256>;
@@ -54,7 +53,6 @@ pub trait IStarkloop<TContractState> {
     fn update_subscription(
         ref self: TContractState, subscription_id: u256, subscription: Subscription
     );
-    fn check_due_payments(ref self: TContractState);
 }
 
 #[starknet::contract]
@@ -171,30 +169,11 @@ pub mod Starkloop {
             
             result
         }
-        
-        fn get_subscription_ids(self: @ContractState, user: ContractAddress) -> Array<u256> {
-            let mut result: Array<u256> = ArrayTrait::new();
-    
-            let mut id_index = 1;
-            let last_id_index = self.next_subscription_id.read();
-            loop {
-                if id_index > last_id_index {
-                    break;
-                }
-                let subscription = self.subscriptions.entry(id_index).read();
-                if (subscription.user == user) {
-                    result.append(id_index);
-                }
-                id_index = id_index + 1;
-            };
-            
-            result
-        }
 
         fn get_subscriptions(
             self: @ContractState, user: ContractAddress
         ) -> Array<super::Subscription> {
-            let mut subscription_id = 0_u256;
+            let mut subscription_id = 1_u256;
             let mut arr = ArrayTrait::<super::Subscription>::new();
 
             loop {
@@ -215,7 +194,7 @@ pub mod Starkloop {
         }
 
         fn remove_subscription(ref self: ContractState, subscription_id: u256) -> u256 {
-            assert!(subscription_id >= 0, "Invalid subscription Id");
+            assert!(subscription_id > 0, "Invalid subscription Id");
 
             let mut subscription = self.subscriptions.entry(subscription_id).read();
             let owner = self.ownable.owner();
@@ -314,31 +293,11 @@ pub mod Starkloop {
         fn update_subscription(
             ref self: ContractState, subscription_id: u256, subscription: super::Subscription
         ) {
-            assert!(subscription_id >= 0, "Invalid subscription Id");
+            assert!(subscription_id > 0, "Invalid subscription Id");
 
             self.subscriptions.entry(subscription_id).write(subscription);
         }
 
-        fn check_due_payments(ref self: ContractState) {
-            let last_block_ts = get_block_timestamp();
-
-            let mut subscription_id = 0_u256;
-
-            loop {
-                if subscription_id >= self.next_subscription_id.read() {
-                    break;
-                }
-
-                let subscription = self.subscriptions.read(subscription_id);
-
-                if subscription.is_active
-                    && last_block_ts >= (subscription.last_payment + subscription.periodicity) {
-                    self.emit(DuePayment { id: subscription_id, time: last_block_ts });
-                }
-
-                subscription_id += 1_u256;
-            }
-        }
     }
 }
 

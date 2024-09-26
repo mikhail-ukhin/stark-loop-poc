@@ -9,10 +9,16 @@ use contracts::starkloop::{
 use starknet::{ContractAddress, contract_address_const, get_block_timestamp, get_caller_address};
 use starknet::contract_address::ContractAddressZeroable;
 
+
+fn OWNER() -> ContractAddress {
+    let owner: ContractAddress = contract_address_const::<'owner'>();
+    owner
+}
+
 fn deploy_contract() -> ContractAddress {
     let contract = declare("Starkloop").unwrap();
 
-    let owner: ContractAddress = contract_address_const::<'owner'>();
+    let owner: ContractAddress = OWNER();
     let mut constructor_calldata = array![owner.into()];
 
     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap_syscall();
@@ -167,87 +173,6 @@ fn test_undefined_subscription() {
 }
 
 #[test]
-fn test_subscription_ids() {
-    // First deploy a new contract
-    let contract_address = deploy_contract();
-
-    let dispatcher = IStarkloopDispatcher { contract_address };
-
-    // Create 3 users
-    let user1 = contract_address_const::<'user1'>();
-    let user2 = contract_address_const::<'user2'>();
-
-    let eth_token_address = contract_address_const::<
-        0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
-    >();
-
-    //Starts a subscription on September 21 at 9 a.m.
-    start_cheat_block_timestamp(contract_address, 1726909200);
-    let current_block_timestamp = get_block_timestamp();
-
-    // This values will be defined by user in the front-end.
-    let amount = 5 * GWEI;
-    let payment_count = 15_u64;
-    let periodicity = 4 * WEEK;
-    // Computed in the front-end
-    let expires_on = current_block_timestamp + payment_count * periodicity;
-
-    // Define a subscription
-    let subscription = SubscriptionTrait::new(
-        0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
-    );
-
-    // Note to myself : To be able to print a struct, it must have #[derive(Debug)]
-    // println!("subscription1 = {:?}", subscription1);
-
-    let mut subscription1 = Subscription { ..subscription };
-    subscription1.user = user1;
-    let mut subscription2 = Subscription { ..subscription };
-    subscription2.user = user2;
-    let mut subscription3 = Subscription { ..subscription };
-    subscription3.user = user2;
-    let mut subscription4 = Subscription { ..subscription };
-    subscription4.user = user1;
-
-    let wanted_result_for_user1 = array![1, 4];
-    let wanted_result_for_user2 = array![2, 3];
-
-    // Create subscription
-    // start_cheat_caller_address(contract_address, user1);
-    // let id1 = dispatcher.create_subscription(subscription1);
-    // let id2 = dispatcher.create_subscription(subscription2);
-    // let id3 = dispatcher.create_subscription(subscription3);
-    // let id4 = dispatcher.create_subscription(subscription4);
-    // println!("id1 = {:?}", id1);
-    // println!("id2 = {:?}", id2);
-    // println!("id3 = {:?}", id3);
-    // println!("id4 = {:?}", id4);
-    dispatcher.create_subscription(subscription1);
-    dispatcher.create_subscription(subscription2);
-    dispatcher.create_subscription(subscription3);
-    dispatcher.create_subscription(subscription4);
-
-    // let sub1 = dispatcher.get_subscription(1);
-    // let sub2 = dispatcher.get_subscription(2);
-    // let sub3 = dispatcher.get_subscription(3);
-    // let sub4 = dispatcher.get_subscription(4);
-
-    // println!("sub1 = {:?}", sub1);
-    // println!("sub2 = {:?}", sub2);
-    // println!("sub3 = {:?}", sub3);
-    // println!("sub4 = {:?}", sub4);
-
-    let user1_ids = dispatcher.get_subscription_ids(user1);
-    // println!("user1_ids = {:?}", user1_ids);
-
-    let user2_ids = dispatcher.get_subscription_ids(user2);
-    // println!("user2_ids = {:?}", user2_ids);
-
-    assert(wanted_result_for_user1 == user1_ids, 'wrong ids for user1');
-    assert(wanted_result_for_user2 == user2_ids, 'wrong ids for user2');
-}
-
-#[test]
 fn test_remove_subscription() {
     // First deploy a new contract
     let contract_address = deploy_contract();
@@ -340,20 +265,22 @@ fn test_get_subscriptions() {
         Subscription { ..subscription1 }, Subscription { ..subscription4 }
     ];
     let wanted_result_for_user2 = array![
-        Subscription { ..subscription3 }, Subscription { ..subscription2 }
+        Subscription { ..subscription2 }, Subscription { ..subscription3 }
     ];
 
     // start_cheat_caller_address(contract_address, user1);
     // Create subscription
-    let s1 = dispatcher.create_subscription(subscription1);
-    let s2 = dispatcher.create_subscription(subscription2);
-    let s3 = dispatcher.create_subscription(subscription3);
-    let s4 = dispatcher.create_subscription(subscription4);
+    let _s1 = dispatcher.create_subscription(subscription1);
+    let _s2 = dispatcher.create_subscription(subscription2);
+    let _s3 = dispatcher.create_subscription(subscription3);
+    let _s4 = dispatcher.create_subscription(subscription4);
 
     let subscriptions_for_user1 = dispatcher.get_subscriptions(user1);
     let subscriptions_for_user2 = dispatcher.get_subscriptions(user2);
 
+    // println!("wanted_result_for_user1 = {:?}", wanted_result_for_user1);
     // println!("subscriptions_for_user1 = {:?}", subscriptions_for_user1);
+    // println!("wanted_result_for_user2 = {:?}", wanted_result_for_user2);
     // println!("subscriptions_for_user2 = {:?}", subscriptions_for_user2);
 
     assert(subscriptions_for_user1 == wanted_result_for_user1, 'wrong subscriptions for user1');
@@ -393,6 +320,7 @@ fn test_make_schedule_payment() {
         0_u256, user2, user1, amount, eth_token_address, periodicity, expires_on, 0_u64, true
     );
 
+    start_cheat_caller_address(contract_address, OWNER());
     let id = dispatcher.create_subscription(subscription);
 
     dispatcher.make_schedule_payment(id);
