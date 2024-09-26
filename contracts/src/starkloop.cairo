@@ -8,7 +8,7 @@ use starknet::ContractAddress;
 
 
 // Structure to hold subscription details
-#[derive(Drop, Debug, PartialEq, Serde, starknet::Store)]
+#[derive(Drop, Debug, PartialEq, Serde, Copy, starknet::Store)]
 pub struct Subscription {
     id: u256,
     user: ContractAddress, // Address of the user that instanciate the Subscription
@@ -205,7 +205,7 @@ pub mod Starkloop {
             // self.users.entry(user_copy).append().write(next_subscription_id);
 
             // Write the struct to storage
-            self.subscriptions.entry(next_subscription_id).write(subscription);
+            self.subscriptions.entry(next_subscription_id).write(subscription_copy);
 
             // Emit the event
             self

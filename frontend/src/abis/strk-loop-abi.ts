@@ -37,6 +37,10 @@ export const STRK_LOOP_ABI = [
     "name": "contracts::starkloop::Subscription",
     "members": [
       {
+        "name": "id",
+        "type": "core::integer::u256"
+      },
+      {
         "name": "user",
         "type": "core::starknet::contract_address::ContractAddress"
       },

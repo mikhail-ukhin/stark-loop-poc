@@ -4,7 +4,7 @@ import { convertToHexString, formatRecipient, convertBigIntToNumber, mapTokenAdd
 
 const SubscriptionList: React.FC = () => {
   const { address } = useAccount();
-  const contract_address = '0xdd07c6e44619c6da9df158d6e3ce4fb2ee37e42295fc6e5b6609e1f81bdd20';
+  const contract_address = '0x2c9f66769b4cc192b7ec87fd4e61ce93d54cf4948e7bbad52d30efa0c369b85';
   const typedABI = STRK_LOOP_ABI as Abi;
 
   const {
@@ -22,6 +22,8 @@ const SubscriptionList: React.FC = () => {
     refetchInterval: 15000
   });
 
+  console.log(readData);
+
   if (!address) return null;
 
   return (
@@ -37,6 +39,7 @@ const SubscriptionList: React.FC = () => {
           <table className="w-full bg-white border-collapse border border-gray-300">
             <thead>
               <tr>
+                <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Id</th>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Recipient</th>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Amount</th>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Token</th>
@@ -48,6 +51,9 @@ const SubscriptionList: React.FC = () => {
               {readData && readData.length > 0 ? (
                 readData.map((subscription: any, index: number) => (
                   <tr key={index} className="hover:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2 text-gray-700">
+                      {subscription.id}
+                    </td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
                       {formatRecipient(subscription.recipient)}
                     </td>

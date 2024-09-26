@@ -8,7 +8,7 @@ import { get_contract_by_address, numberToU256 } from '@/lib/utils';
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
-    const contract_address = '0xdd07c6e44619c6da9df158d6e3ce4fb2ee37e42295fc6e5b6609e1f81bdd20';
+    const contract_address = '0x2c9f66769b4cc192b7ec87fd4e61ce93d54cf4948e7bbad52d30efa0c369b85';
     const erc20_strk_contract_address = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d';
     const typedABI = STRK_LOOP_ABI as Abi;
     const erc20ABI = STRK_ABI as Abi;
@@ -20,6 +20,7 @@ const SubscriptionForm: FC = () => {
 
     // Subscription state initialization
     const [subscription, setSubscription] = useState({
+        id: cairo.uint256(0),
         user: '',
         recipient: '',
         amount: 0,
@@ -73,7 +74,7 @@ const SubscriptionForm: FC = () => {
             return [];
         }
         const MULTIPLIER = 10000000000000000;
-        
+
         const currentTime = Math.floor(Date.now() / 1000);
         const totalAmount = Math.ceil(amount * (expires_on - currentTime) / periodicity);   // The total amount of token spend during subscription must be approved
 
