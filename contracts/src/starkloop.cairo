@@ -135,8 +135,6 @@ pub mod Starkloop {
     #[abi(embed_v0)]
     impl StarkloopImpl of super::IStarkloop<ContractState> {
         fn get_all_subscription_that_must_be_payed_ids(self: @ContractState) -> Array<u256> {
-            self.ownable.assert_only_owner();
-
             let mut result: Array<u256> = ArrayTrait::new();
             let last_block_ts = get_block_timestamp();
 
