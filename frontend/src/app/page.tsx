@@ -9,20 +9,23 @@ const SubscriptionList = dynamic(() => import('../components/SubscriptionList'),
 const Page: FC = () => {
 
   return (
-    <div className="min-h-screen bg-white p-4 flex flex-col justify-center items-center">
-      <h1 className="text-2xl font-medium text-gray-800 mb-4">STRK Loop</h1>
+<div className="min-h-screen bg-white p-4 flex flex-col justify-center items-center">
+  <h1 className="text-2xl font-medium text-gray-800 mb-4">STRK Loop</h1>
 
-      <div className="flex flex-wrap justify-center gap-4 w-full max-w-4xl">
-        <div className="w-full max-w-md space-y-4">
-          <WalletBar />
-
-          <SubscriptionForm />
-
-          <SubscriptionList />
-
-        </div>
-      </div>
+  <div className="flex flex-wrap justify-center gap-4 w-full max-w-6xl"> {/* Flex container with a wider width */}
+    
+    <div className="w-full max-w-sm space-y-4"> {/* Keep form compact */}
+      <WalletBar />
+      <SubscriptionForm />
     </div>
+
+    <div className="w-full flex-grow"> {/* Let SubscriptionList take up available space */}
+      <SubscriptionList />
+    </div>
+
+  </div>
+</div>
+
   );
 };
 

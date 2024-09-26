@@ -1,11 +1,15 @@
-import { useAccount, Abi, useReadContract } from '@starknet-react/core';
+import { useAccount, Abi, useReadContract, useContract, useSendTransaction, useTransactionReceipt } from '@starknet-react/core';
 import { STRK_LOOP_ABI } from "../abis/strk-loop-abi";
-import { convertToHexString, formatRecipient, convertBigIntToNumber, mapTokenAddressToLabel  } from '@/lib/utils';
+import { convertToHexString, formatRecipient, convertBigIntToNumber, mapTokenAddressToLabel, getNextPayment } from '@/lib/utils';
+import { cairo } from 'starknet';
+import CancelButton from './cancel-button';
 
 const SubscriptionList: React.FC = () => {
   const { address } = useAccount();
   const contract_address = '0x378fe3a3f8bc503f78e91dbbba42efab3e4ffc5ab140d8e316b0fe1f02c2391';
   const typedABI = STRK_LOOP_ABI as Abi;
+
+  const { contract } = useContract({ abi: typedABI, address: contract_address });
 
   const {
     data: readData,
@@ -22,7 +26,6 @@ const SubscriptionList: React.FC = () => {
     refetchInterval: 15000
   });
 
-  console.log(readData);
 
   if (!address) return null;
 
@@ -36,46 +39,44 @@ const SubscriptionList: React.FC = () => {
         <p className="text-red-500">Error: {readError?.message || "Failed to load subscriptions."}</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full bg-white border-collapse border border-gray-300">
+          <table className="min-w-[1200px] w-full bg-white border-collapse border border-gray-300">
             <thead>
               <tr>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Id</th>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Recipient</th>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Amount</th>
-                <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Token</th>
+                <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Next Payment</th>
                 <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Expires On</th>
-                <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Status</th>
+                <th className="border border-gray-300 px-4 py-2 text-left font-medium text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
               {readData && readData.length > 0 ? (
                 readData.map((subscription: any, index: number) => (
                   <tr key={index} className="hover:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2 text-gray-700">{convertBigIntToNumber(subscription.id)}</td>
+                    <td className="border border-gray-300 px-4 py-2 text-gray-700">{formatRecipient(subscription.recipient)}</td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
-                    {convertBigIntToNumber(subscription.id)}
+                      {convertBigIntToNumber(subscription.amount)} {mapTokenAddressToLabel(subscription.token_address)}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
-                      {formatRecipient(subscription.recipient)}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2 text-gray-700">
-                      {convertBigIntToNumber(subscription.amount)}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2 text-gray-700">
-                      {mapTokenAddressToLabel(subscription.token_address)} {/* Display token label */}
+                      {getNextPayment(subscription.last_payment, subscription.periodicity).toLocaleString()}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
                       {new Date(Number(subscription.expires_on) * 1000).toLocaleDateString()}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
-                      {subscription.is_active ? "Active" : "Inactive"}
+                      <CancelButton
+                        subId={subscription.id}
+                        contract={contract}
+                        onSuccess={dataRefetch} // Refresh list after successful cancellation
+                      />
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="text-center border border-gray-300 px-4 py-2 text-gray-700">
-                    No subscriptions found
-                  </td>
+                  <td colSpan={6} className="text-center border border-gray-300 px-4 py-2 text-gray-700">No subscriptions found</td>
                 </tr>
               )}
             </tbody>

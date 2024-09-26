@@ -1,5 +1,5 @@
 import { useContract } from "@starknet-react/core";
-import { Abi } from "starknet";
+import { Abi, cairo } from "starknet";
 
 type HexString = `0x${string}`;
 
@@ -34,7 +34,7 @@ export const convertToHexString = (input: string | undefined): HexString => {
 }
 
   export const mapTokenAddressToLabel = (tokenAddressBigInt: bigint) => {
-    const tokenAddress = `0x${tokenAddressBigInt.toString(16)}`; 
+    const tokenAddress = `0x0${tokenAddressBigInt.toString(16)}`; 
     const token = tokenOptions.find((t) => t.value.toLowerCase() === tokenAddress.toLowerCase());
 
     return token ? token.label : tokenAddress;
@@ -48,6 +48,20 @@ export const convertToHexString = (input: string | undefined): HexString => {
   export const convertBigIntToNumber = (bigIntValue: bigint) => {
     return Number(bigIntValue);
   };
+
+  export const getNextPayment = (last_payment: bigint, periodicity: bigint) => {
+    // If last_payment is 0 (bigint zero), return the current date in milliseconds
+    if (last_payment === BigInt(0)) {
+      return new Date(Date.now());
+    }
+  
+    // Convert last_payment and periodicity to numbers and add them
+    const timestampNumber: number = Number(last_payment) * 1000 + Number(periodicity) * 1000;
+  
+    // Return the calculated next payment date as a Date object
+    return new Date(timestampNumber);
+  };
+  
 
    // Convert a plain number or BigInt to u256 structure
   export function numberToU256(num: number) {
