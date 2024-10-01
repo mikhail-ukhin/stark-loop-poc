@@ -5,12 +5,12 @@ import CancelButton from './cancel-button';
 
 const SubscriptionList: React.FC = () => {
   const { address } = useAccount();
-  const contract_address = process.env.NEXT_PUBLIC_CONTRACT_ADDR;
+  const contract_address = process.env.NEXT_PUBLIC_CONTRACT_ADDR as `0x${string}` | undefined;
   const typedABI = STRK_LOOP_ABI as Abi;
 
   const { contract } = useContract({
     abi: typedABI,
-    address: contract_address as `0x${string}` | undefined,
+    address: contract_address,
   });
 
   const {
@@ -25,7 +25,7 @@ const SubscriptionList: React.FC = () => {
     abi: typedABI,
     address: contract_address,
     watch: true,
-    refetchInterval: 2000
+    refetchInterval: 15000
   });
 
 

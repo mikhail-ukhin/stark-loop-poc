@@ -8,13 +8,13 @@ import { get_contract_by_address, numberToU256, tokenOptions } from '@/lib/utils
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
-    const contract_address = process.env.NEXT_PUBLIC_CONTRACT_ADDR;
+    const contract_address = process.env.NEXT_PUBLIC_CONTRACT_ADDR as `0x${string}` | undefined;
     const erc20_strk_contract_address = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d';
     const MULTIPLIER = 10000000000000000;
     const typedABI = STRK_LOOP_ABI as Abi;
     const erc20ABI = STRK_ABI as Abi;
 
-    const { contract } = useContract({ abi: typedABI, address: contract_address as `0x${string}` | undefined });
+    const { contract } = useContract({ abi: typedABI, address: contract_address });
     const erc20 = get_contract_by_address(erc20_strk_contract_address, erc20ABI);
 
     const [subscription, setSubscription] = useState({
