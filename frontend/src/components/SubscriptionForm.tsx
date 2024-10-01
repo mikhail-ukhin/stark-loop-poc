@@ -1,3 +1,4 @@
+'use client';
 import { FC, useMemo, useState, useEffect } from 'react';
 import { useAccount, useContract, useSendTransaction, useTransactionReceipt } from '@starknet-react/core';
 import { STRK_LOOP_ABI } from "../abis/strk-loop-abi";
@@ -7,12 +8,13 @@ import { get_contract_by_address, numberToU256, tokenOptions } from '@/lib/utils
 
 const SubscriptionForm: FC = () => {
     const { address } = useAccount();
-    const contract_address = '0x378fe3a3f8bc503f78e91dbbba42efab3e4ffc5ab140d8e316b0fe1f02c2391';
+    const contract_address = process.env.NEXT_PUBLIC_CONTRACT_ADDR;
     const erc20_strk_contract_address = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d';
+    const MULTIPLIER = 10000000000000000;
     const typedABI = STRK_LOOP_ABI as Abi;
     const erc20ABI = STRK_ABI as Abi;
 
-    const { contract } = useContract({ abi: typedABI, address: contract_address });
+    const { contract } = useContract({ abi: typedABI, address: contract_address as `0x${string}` | undefined });
     const erc20 = get_contract_by_address(erc20_strk_contract_address, erc20ABI);
 
     const [subscription, setSubscription] = useState({
@@ -20,7 +22,7 @@ const SubscriptionForm: FC = () => {
         user: '',
         recipient: '',
         amount: 0,
-        token_address: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d',
+        token_address: erc20_strk_contract_address,
         periodicity: 0,
         expires_on: 0,
         last_payment: 0,
@@ -59,7 +61,7 @@ const SubscriptionForm: FC = () => {
         if (!address || !erc20 || !recipient || !expires_on || !amount || !token_address || !periodicity || periodicity <= 0 || !user) {
             return [];
         }
-        const MULTIPLIER = 10000000000000000;
+        
 
         const currentTime = Math.floor(Date.now() / 1000);
         const totalAmount = Math.ceil(amount * (expires_on - currentTime) / periodicity);   // The total amount of token spend during subscription must be approved

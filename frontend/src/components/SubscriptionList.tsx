@@ -1,15 +1,17 @@
-import { useAccount, Abi, useReadContract, useContract, useSendTransaction, useTransactionReceipt } from '@starknet-react/core';
+import { useAccount, Abi, useReadContract, useContract } from '@starknet-react/core';
 import { STRK_LOOP_ABI } from "../abis/strk-loop-abi";
-import { convertToHexString, formatRecipient, convertBigIntToNumber, mapTokenAddressToLabel, getNextPayment } from '@/lib/utils';
-import { cairo } from 'starknet';
+import { formatRecipient, convertBigIntToNumber, mapTokenAddressToLabel, getNextPayment } from '@/lib/utils';
 import CancelButton from './cancel-button';
 
 const SubscriptionList: React.FC = () => {
   const { address } = useAccount();
-  const contract_address = '0x378fe3a3f8bc503f78e91dbbba42efab3e4ffc5ab140d8e316b0fe1f02c2391';
+  const contract_address = process.env.NEXT_PUBLIC_CONTRACT_ADDR;
   const typedABI = STRK_LOOP_ABI as Abi;
 
-  const { contract } = useContract({ abi: typedABI, address: contract_address });
+  const { contract } = useContract({
+    abi: typedABI,
+    address: contract_address as `0x${string}` | undefined,
+  });
 
   const {
     data: readData,
@@ -23,7 +25,7 @@ const SubscriptionList: React.FC = () => {
     abi: typedABI,
     address: contract_address,
     watch: true,
-    refetchInterval: 5000
+    refetchInterval: 2000
   });
 
 
@@ -31,7 +33,7 @@ const SubscriptionList: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-100 border border-gray-300 shadow-md rounded-lg overflow-x-auto">
-      <h3 className="text-lg font-semibold text-gray-700 mb-4">Subscription List</h3>
+      <h3 className="text-lg font-semibold text-gray-700 mb-4">My Subscriptions</h3>
 
       {readIsLoading ? (
         <p className="text-gray-600">Loading subscriptions...</p>

@@ -1,3 +1,5 @@
+'use client';
+
 import { useConnect, useDisconnect, useAccount } from '@starknet-react/core';
 
 const WalletBar: React.FC = () => {
@@ -10,15 +12,14 @@ const WalletBar: React.FC = () => {
       {!address ? (
         <button
           onClick={() => connect({ connector: connectors[0] })}
-          className="border border-gray-300 text-gray-700 font-medium py-2 px-4 bg-orange-200 rounded-md hover:bg-orange-300 shadow-sm transition-all"
+          className="border border-transparent text-white font-medium py-2 px-4 bg-orange-500 rounded-md hover:bg-orange-600 shadow-sm transition-all"
         >
-          Connect
+          Connect Wallet
         </button>
-
       ) : (
         <button
           onClick={() => disconnect()}
-          className="border border-gray-300 text-gray-700 font-medium py-2 px-4 bg-yellow-100 rounded-md hover:bg-yellow-150 shadow-sm transition-all"
+          className="border border-transparent text-white font-medium py-2 px-4 bg-gray-700 rounded-md hover:bg-gray-600 shadow-sm transition-all"
         >
           {`${address.slice(0, 6)}...${address.slice(-4)}`} (Disconnect)
         </button>

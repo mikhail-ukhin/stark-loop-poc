@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const CONTRACT_PATH = "./artifacts/abi.json";
-const CALL_DUE_PAYMENTS_INTERVAL_MS = 30 * 1000; // 60 seconds
+const CALL_DUE_PAYMENTS_INTERVAL_MS = 15 * 1000; // 60 seconds
 
 let serviceAccount: Account;
 let loopContract: Contract;
@@ -29,12 +29,12 @@ async function getContract() {
 }
 
 async function checkDuePayments() {
-    console.log('starting to check for any due payments');
+    console.log(`[${Date.now().toString()}] Starting to check for any due payments`);
 
     const result = await getPayableSubscriptionIds();
 
     if (result && result.length > 0) {
-        console.log(`found ${result.length} payments. Processing them...`);
+        console.log(`[${Date.now().toString()}] Found ${result.length} payment(s). Processing them...`);
 
         // send them sequentially (can think about do parallel Promise.all())
         result.forEach(async element => {
@@ -42,24 +42,17 @@ async function checkDuePayments() {
         });
     }
     else {
-        console.log('Nothing was found. waiting...')
+        console.log(`[${Date.now().toString()}] Nothing was found. Waiting for 15 seconds...`)
     }
 }
 
 async function getPayableSubscriptionIds() {
     try {
-        const { suggestedMaxFee: estimatedFee } = await serviceAccount.estimateInvokeFee({
-            contractAddress: loopContract.address,
-            entrypoint: "get_all_subscription_that_must_be_payed_ids",
-            calldata: [],
-        });
-
         const result = await loopContract.call("get_all_subscription_that_must_be_payed_ids", []);
 
-        console.log(`✅ Payment check transaction hash`);
         return result as Array<BigInt>;
     } catch (error) {
-        console.error('Error in getPayableSubscriptionIds:', error);
+        console.error('Error in getPayableSubscriptionIds', error);
     }
 }
 
@@ -80,7 +73,7 @@ async function sendPayment(id: any) {
 
         await myProvider.waitForTransaction(result.transaction_hash);
 
-        console.log(`✅ Payment for subscription ${id} completed. Transaction hash: ${result.transaction_hash}`);
+        console.log(`[${Date.now().toString()}] ✅ Payment for subscription ${id} completed. Transaction hash: ${result.transaction_hash}`);
     } catch (error) {
         console.error(`Error ${error} processing payment for subscription ${id}:`);
     }
