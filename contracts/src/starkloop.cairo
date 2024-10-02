@@ -157,7 +157,6 @@ pub mod Starkloop {
         }
 
         fn get_all_active_subscription_ids(self: @ContractState) -> Array<u256> {
-            self.ownable.assert_only_owner();
 
             let mut result: Array<u256> = ArrayTrait::new();
 
@@ -178,7 +177,6 @@ pub mod Starkloop {
         }
 
         fn get_all_subscription_ids(self: @ContractState) -> Array<u256> {
-            self.ownable.assert_only_owner();
 
             let mut result: Array<u256> = ArrayTrait::new();
 
@@ -299,14 +297,7 @@ pub mod Starkloop {
         }
 
         fn get_subscription(self: @ContractState, subscription_id: u256) -> super::Subscription {
-            let subscription = self.subscriptions.entry(subscription_id).read();
-            let owner = self.ownable.owner();
-            let caller = get_caller_address();
-
-            assert!(
-                caller == owner || caller == subscription.user, "only user or owner are allowed"
-            );
-            subscription
+            self.subscriptions.entry(subscription_id).read()
         }
 
         fn make_schedule_payment(ref self: ContractState, subscription_id: u256) {
