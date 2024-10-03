@@ -10,12 +10,14 @@ const SubscriptionForm: FC = () => {
     const { address } = useAccount();
     const contract_address = process.env.NEXT_PUBLIC_CONTRACT_ADDR as `0x${string}` | undefined;
     const erc20_strk_contract_address = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d';
-    const MULTIPLIER = 10000000000000000;
     const typedABI = STRK_LOOP_ABI as Abi;
     const erc20ABI = STRK_ABI as Abi;
 
     const { contract } = useContract({ abi: typedABI, address: contract_address });
     const erc20 = get_contract_by_address(erc20_strk_contract_address, erc20ABI);
+
+    const [decimals, setDecimals] = useState(18);
+    const [float_amount, setFloatAmount] = useState(0.0);
 
     const [subscription, setSubscription] = useState({
         id: cairo.uint256(0),
@@ -37,6 +39,34 @@ const SubscriptionForm: FC = () => {
             }));
         }
     }, [address]);
+
+    // Updating decimals when erc20 changes
+    useEffect(() => {
+        const fetchDecimals = async () => {
+            if (erc20) {
+                const decimalsResult = await erc20.decimals();
+                setDecimals(Number(decimalsResult));
+                console.log('decimals = ', decimals);
+            }
+        };
+        fetchDecimals();
+        console.log('erc20 = ', erc20);
+        console.log('decimals = ', decimals);
+
+    }, [erc20]);
+
+    // Updating amount from float_amount and decimals
+    useEffect(() => {
+        console.log('float_amount = ', float_amount);
+        console.log('decimals = ', decimals);
+
+        setSubscription((prevSubscription) => ({
+            ...prevSubscription,
+            amount: float_amount * Math.pow(10, decimals),
+        }));
+        console.log('(previous value) subscription.amount = ', subscription.amount);
+
+    }, [float_amount]);
 
     const handleExpiresOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedDateTime = e.target.value;
@@ -62,11 +92,19 @@ const SubscriptionForm: FC = () => {
             return [];
         }
         
-
         const currentTime = Math.floor(Date.now() / 1000);
-        const totalAmount = Math.ceil(amount * (expires_on - currentTime) / periodicity);   // The total amount of token spend during subscription must be approved
+        const payment_count =  Math.ceil((expires_on - currentTime) / periodicity);
+        console.log('expires_on', expires_on);
+        console.log('currentTime', currentTime);
+        console.log('payment_count', payment_count);
+        if (payment_count <= 0) {
+            return [];
+        }
+        const totalAmount = Math.ceil(subscription.amount * payment_count);   // The total amount of token spend during subscription must be approved
+        console.log('totalAmount', totalAmount);
+        console.log('cairo.uint256(BigInt(totalAmount))', cairo.uint256(BigInt(totalAmount)));
 
-        return [erc20.populate("approve", [contract_address, cairo.uint256(BigInt(totalAmount * MULTIPLIER))])];  // No need to multiply if input is direct
+        return [erc20.populate("approve", [contract_address, cairo.uint256(BigInt(totalAmount))])];
     }, [erc20, address, subscription]);
 
     const { sendAsync: writeApprovalAsync, data: writeApprovalData, isPending: writeApprovalIsPending } = useSendTransaction({ calls: callsApproval });
@@ -121,7 +159,7 @@ const SubscriptionForm: FC = () => {
             <h3 className="text-xl font-medium text-gray-800 mb-4">Create Subscription</h3>
 
             {renderInput("recipient", "Recipient", subscription.recipient, (e: any) => setSubscription({ ...subscription, recipient: e.target.value }))}
-            {renderInput("amount", "Amount", subscription.amount, (e: any) => setSubscription({ ...subscription, amount: parseInt(e.target.value, 10) || 0 }), "number")}
+            {renderInput("amount", "Amount", float_amount, (e: any) => setFloatAmount(parseFloat(e.target.value) || 0), "number")}
 
             <label htmlFor="token_address" className="block text-sm font-medium text-gray-700 mb-2 mt-4">Token</label>
             <select
