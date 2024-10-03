@@ -5,9 +5,9 @@ type HexString = `0x${string}`;
 
 // Token options with labels and values
 export const tokenOptions = [
-  { label: 'STRK', value: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d' },
-  { label: 'USDC', value: '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8' },
-  { label: 'DAI', value: '0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3' },
+  { label: 'STRK', value: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d', decimals: 18 },
+  { label: 'USDC', value: '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8', decimals: 6  },
+  { label: 'DAI', value: '0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3', decimals: 18  },
 ];
 
 // Helper function to shorten address
@@ -38,6 +38,13 @@ export const convertToHexString = (input: string | undefined): HexString => {
     const token = tokenOptions.find((t) => t.value.toLowerCase() === tokenAddress.toLowerCase());
 
     return token ? token.label : tokenAddress;
+  };
+
+  export const mapTokenAddressToDecimals = (tokenAddressBigInt: bigint) => {
+    const tokenAddress = `0x0${tokenAddressBigInt.toString(16)}`;
+    const token = tokenOptions.find((t) => t.value.toLowerCase() === tokenAddress.toLowerCase());
+
+    return token ? token.decimals : 1;
   };
 
   export const formatRecipient = (bigIntValue: bigint) => {

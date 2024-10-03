@@ -1,6 +1,6 @@
 import { useAccount, Abi, useReadContract, useContract } from '@starknet-react/core';
 import { STRK_LOOP_ABI } from "../abis/strk-loop-abi";
-import { formatRecipient, convertBigIntToNumber, mapTokenAddressToLabel, getNextPayment } from '@/lib/utils';
+import { formatRecipient, convertBigIntToNumber, mapTokenAddressToLabel, mapTokenAddressToDecimals, getNextPayment } from '@/lib/utils';
 import CancelButton from './cancel-button';
 
 const SubscriptionList: React.FC = () => {
@@ -60,7 +60,7 @@ const SubscriptionList: React.FC = () => {
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">{convertBigIntToNumber(subscription.id)}</td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">{formatRecipient(subscription.recipient)}</td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
-                      {convertBigIntToNumber(subscription.amount)} {mapTokenAddressToLabel(subscription.token_address)}
+                      {Number((Number(subscription.amount) / Math.pow(10, mapTokenAddressToDecimals(subscription.token_address))))} {mapTokenAddressToLabel(subscription.token_address)}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 text-gray-700">
                       {convertBigIntToNumber(subscription.periodicity)} second(s)
