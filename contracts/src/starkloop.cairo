@@ -147,6 +147,7 @@ pub mod Starkloop {
                 let subscription = self.subscriptions.entry(id_index).read();
 
                 if subscription.is_active
+                    && last_block_ts <= subscription.expires_on
                     && last_block_ts >= (subscription.last_payment + subscription.periodicity) {
                     result.append(id_index);
                 }
@@ -157,7 +158,6 @@ pub mod Starkloop {
         }
 
         fn get_all_active_subscription_ids(self: @ContractState) -> Array<u256> {
-
             let mut result: Array<u256> = ArrayTrait::new();
 
             let mut id_index = 1;
@@ -177,7 +177,6 @@ pub mod Starkloop {
         }
 
         fn get_all_subscription_ids(self: @ContractState) -> Array<u256> {
-
             let mut result: Array<u256> = ArrayTrait::new();
 
             let mut id_index = 1;
